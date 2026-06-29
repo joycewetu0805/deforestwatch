@@ -1,4 +1,4 @@
-.PHONY: help install collect train test api dashboard frontend seed report docker clean
+.PHONY: help install collect train test api dashboard frontend seed report memoir check-data docker clean
 
 help:
 	@echo "DeforestWatch-DRC — commandes disponibles :"
@@ -10,7 +10,9 @@ help:
 	@echo "  make api        Démarre l'API FastAPI (port 8000)"
 	@echo "  make dashboard  Démarre le dashboard Streamlit (port 8501)"
 	@echo "  make frontend   Démarre le frontend React (port 5173)"
-	@echo "  make report     Génère le rapport PDF de synthèse"
+	@echo "  make report     Génère le rapport de synthèse"
+	@echo "  make memoir     Génère le mémoire académique (.docx)"
+	@echo "  make check-data Vérifie les vraies données dans data/raw/"
 	@echo "  make docker     Build + run via docker-compose"
 
 install:
@@ -39,6 +41,12 @@ frontend:
 
 report:
 	python -m scripts.generate_report
+
+memoir:
+	python -m scripts.generate_memoir
+
+check-data:
+	python -m scripts.check_real_data
 
 docker:
 	docker-compose up --build

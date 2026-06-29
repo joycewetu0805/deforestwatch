@@ -1,6 +1,8 @@
 # 🌍 DeforestWatch-DRC
 
-**Surveillance et prédiction de la déforestation en République Démocratique du Congo par imagerie satellite et Machine Learning**
+**Surveillance et prédiction de la déforestation de la forêt équatoriale du Bassin du Congo (RDC) par imagerie satellite et Machine Learning**
+
+> 🌳 **Écosystème ciblé** : forêt tropicale humide **équatoriale** du Bassin du Congo (province du Mai-Ndombe).
 
 Projet de fin d'études — L3 LMD FASI, Université Protestante au Congo  
 Orientation : Data Science  
@@ -213,6 +215,32 @@ pytest tests/ -v --cov=src
 > (GEE, Supabase, OpenWeather, JWT) et mettez `DEMO_MODE=false`. Les modules de
 > collecte basculent automatiquement sur les vraies sources (Sentinel-2, Hansen,
 > SRTM, OpenWeatherMap) et la base sur PostgreSQL/Supabase.
+
+### Brancher de vraies images satellites
+
+Le projet est conçu pour passer des données de démonstration aux **vraies
+images** sans modifier le code. Une couche d'abstraction (`src/data/sources.py`)
+résout automatiquement la source active :
+
+1. Déposez vos GeoTIFF dans `data/raw/` selon le format décrit dans
+   [`data/raw/README.md`](data/raw/README.md) (composites 6 bandes par année,
+   cartes de classes optionnelles, topographie).
+2. Vérifiez le jeu de données : `make check-data`.
+3. Mettez `DEMO_MODE=false` dans `.env`.
+
+Toute l'application (datasets ML, statistiques, dashboard, API `/api/v1/source`)
+bascule alors sur les données réelles. Vous pouvez commencer avec **une seule
+année** pour valider la chaîne, puis enrichir progressivement.
+
+### Mémoire académique
+
+```bash
+make memoir      # génère docs/memoire_deforestwatch.docx (UPC/FASI)
+```
+
+Le mémoire (page de garde, chapitres, tableaux, bibliographie, annexes) est
+pré-rempli à partir du projet réellement implémenté ; les résultats chiffrés
+sont à confirmer sur données réelles.
 
 ### Docker
 
