@@ -32,7 +32,7 @@ class Settings(BaseSettings):
     openweather_api_key: Optional[str] = None
 
     # ── Authentication ──
-    jwt_secret_key: str = "change-this-in-production"
+    jwt_secret_key: str = "change-this-in-production-with-a-long-random-secret-key"
     jwt_algorithm: str = "HS256"
     jwt_expiration_minutes: int = 60
 

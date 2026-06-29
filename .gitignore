@@ -37,3 +37,6 @@ frontend/node_modules/
 *.log
 logs/
 spark-warehouse/
+
+# Base SQLite générée en mode démo
+data/*.db
