@@ -6,13 +6,13 @@ import numpy as np
 import streamlit as st
 
 from config.settings import PIXEL_AREA_HA, settings
-from src.utils import synthetic
+from src.data import provider
 from src.visualization import maps
 
 
 @st.cache_data(ttl=600)
 def _risk():
-    return synthetic.risk_map()
+    return provider.risk_map()
 
 
 def render() -> None:

@@ -6,23 +6,30 @@ import numpy as np
 import streamlit as st
 
 from config.settings import PIXEL_AREA_HA
-from src.utils import synthetic
+from src.data import provider
 from src.visualization import charts, maps, timeline
 
 
 @st.cache_data(ttl=600)
 def _stats():
-    return synthetic.yearly_statistics()
+    return provider.yearly_statistics()
 
 
 @st.cache_data(ttl=600)
 def _risk():
-    return synthetic.risk_map()
+    return provider.risk_map()
 
 
 def render() -> None:
-    st.title("📊 Dashboard — Surveillance de la déforestation")
-    st.caption("Province du Mai-Ndombe (Inongo), RDC · Composites Sentinel-2 2015–2025")
+    st.title("📊 Dashboard — Surveillance de la forêt équatoriale")
+    st.caption("Province du Mai-Ndombe (Inongo), RDC · Bassin du Congo · Sentinel-2 2015–2025")
+
+    if provider.is_real():
+        st.success("🛰️ Source : **vraies images satellites** (data/raw/).")
+    else:
+        st.info("🧪 Source : **données de démonstration** (synthétiques). "
+                "Déposez de vraies images dans `data/raw/` et mettez `DEMO_MODE=false` "
+                "pour basculer sur les données réelles.")
 
     stats = _stats()
     last, first = stats[-1], stats[0]
@@ -63,7 +70,7 @@ def render() -> None:
 
     # ── Top 5 zones ──
     st.subheader("🔥 Top 5 des secteurs les plus touchés")
-    series = synthetic.generate_landcover_series()
+    series = provider.landcover_series()
     lc = series[max(series)]
     grid = lc.shape[0]
     block = grid // 5

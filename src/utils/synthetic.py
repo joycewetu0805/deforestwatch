@@ -168,12 +168,17 @@ def build_tile_dataset(n_tiles: int = 64, tile: int = 128, seed: int = 42) -> di
     return {"X": np.array(X, dtype=np.float32), "y": np.array(y, dtype=np.int8)}
 
 
-def yearly_statistics(seed: int = 42) -> list[dict]:
-    """Statistiques de déforestation année par année (pour API/dashboard)."""
-    series = generate_landcover_series(seed=seed)
+def yearly_statistics(series: dict | None = None, seed: int = 42) -> list[dict]:
+    """Statistiques de déforestation année par année (pour API/dashboard).
+
+    `series` : série {année: carte de classes} à analyser. Si None, série
+    synthétique générée (rétro-compatible). Permet d'injecter des données réelles.
+    """
+    if series is None:
+        series = generate_landcover_series(seed=seed)
     stats = []
     prev_forest = None
-    for year in ANALYSIS_YEARS:
+    for year in sorted(series.keys()):
         lc = series[year]
         forest_px = int(np.sum((lc == 0) | (lc == 1)))
         forest_ha = round(forest_px * PIXEL_AREA_HA, 1)
@@ -189,10 +194,14 @@ def yearly_statistics(seed: int = 42) -> list[dict]:
     return stats
 
 
-def risk_map(seed: int = 42) -> np.ndarray:
-    """Carte de risque 0..100 (probabilité de déforestation future par pixel)."""
-    series = generate_landcover_series(seed=seed)
-    last = series[ANALYSIS_YEARS[-1]]
+def risk_map(series: dict | None = None, seed: int = 42) -> np.ndarray:
+    """Carte de risque 0..100 (probabilité de déforestation future par pixel).
+
+    `series` optionnel : permet de calculer le risque sur des données réelles.
+    """
+    if series is None:
+        series = generate_landcover_series(seed=seed)
+    last = series[max(series.keys())]
     forest = (last == 0) | (last == 1)
     deforested = ~forest
 

@@ -41,20 +41,25 @@ def spatial_block_split(grid: int = GRID_SIZE, seed: int = 42):
 
 
 def build_pixel_splits(seed: int = 42) -> dict:
-    """Dataset pixel-based avec split spatial."""
+    """Dataset pixel-based avec split spatial, à partir de la source active
+    (synthétique en démo, vraies images GeoTIFF si présentes dans data/raw/)."""
     from config.settings import FEATURE_NAMES
+    from src.data import provider
 
-    series = synthetic.generate_landcover_series(seed=seed)
-    from config.settings import ANALYSIS_YEARS
-
-    year = ANALYSIS_YEARS[-1]
+    series = provider.landcover_series()
+    year = max(series.keys())
     lc = series[year]
-    bands = synthetic.landcover_to_bands(lc, seed=year)
+    bands = provider.composite(year)
+    if bands.shape[:2] != lc.shape:
+        raise ValueError(
+            f"Dimensions incohérentes composite {bands.shape[:2]} vs landcover {lc.shape}. "
+            "Vérifiez l'alignement des rasters dans data/raw/."
+        )
     idx = synthetic.compute_indices_array(bands)
-    topo = synthetic.generate_topography(seed=seed)
+    topo = provider.topography()
     feats = np.concatenate([bands, idx, topo], axis=-1)  # (H,W,13)
 
-    assign = spatial_block_split(seed=seed).reshape(-1)
+    assign = spatial_block_split(grid=lc.shape[0], seed=seed).reshape(-1)
     X = feats.reshape(-1, feats.shape[-1])
     y = lc.reshape(-1)
 
@@ -66,8 +71,14 @@ def build_pixel_splits(seed: int = 42) -> dict:
 
 
 def build_tile_splits(seed: int = 42) -> dict:
-    """Dataset tile-based (U-Net) avec split aléatoire des tuiles."""
-    ds = synthetic.build_tile_dataset(n_tiles=96, seed=seed)
+    """Dataset tile-based (U-Net) avec split aléatoire des tuiles, depuis la
+    source active (tuiles réelles si vraies images présentes)."""
+    from src.data import provider
+
+    if provider.is_real():
+        ds = _real_tiles(provider, seed=seed)
+    else:
+        ds = synthetic.build_tile_dataset(n_tiles=96, seed=seed)
     X, y = ds["X"], ds["y"]
     n = len(X)
     rng = np.random.default_rng(seed)
@@ -79,6 +90,22 @@ def build_tile_splits(seed: int = 42) -> dict:
         "X_val": X[va], "y_val": y[va],
         "X_test": X[te], "y_test": y[te],
     }
+
+
+def _real_tiles(provider, tile: int = 128, seed: int = 42) -> dict:
+    """Découpe les vraies images en tuiles 128×128 (composite + étiquettes)."""
+    from src.preprocessing.feature_extraction import extract_tiles
+
+    series = provider.landcover_series()
+    X_all, y_all = [], []
+    for year, lc in series.items():
+        bands = provider.composite(year)
+        tiles, labs, _ = extract_tiles(bands, lc, tile=tile, overlap=32)
+        X_all.append(tiles)
+        y_all.append(labs)
+    if not X_all:
+        raise ValueError("Aucune image étiquetée disponible pour le dataset tuiles.")
+    return {"X": np.concatenate(X_all), "y": np.concatenate(y_all)}
 
 
 def export(out_dir: Path = PROCESSED_DIR, seed: int = 42) -> dict:

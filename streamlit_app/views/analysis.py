@@ -7,16 +7,16 @@ from pathlib import Path
 import numpy as np
 import streamlit as st
 
-from config.settings import ANALYSIS_YEARS, LAND_COVER_CLASSES, PROCESSED_DIR
+from config.settings import LAND_COVER_CLASSES, PROCESSED_DIR
+from src.data import provider
 from src.models.evaluator import confusion
-from src.utils import synthetic
 from src.utils.helpers import load_json
 from src.visualization import charts, maps
 
 
 @st.cache_data(ttl=600)
 def _series():
-    return synthetic.generate_landcover_series()
+    return provider.landcover_series()
 
 
 def _class_counts(lc: np.ndarray) -> dict:
@@ -26,8 +26,9 @@ def _class_counts(lc: np.ndarray) -> dict:
 def render() -> None:
     st.title("🔬 Analyse exploratoire")
     series = _series()
+    yrs = sorted(series.keys())
 
-    year = st.slider("Année d'analyse", ANALYSIS_YEARS[0], ANALYSIS_YEARS[-1], ANALYSIS_YEARS[-1])
+    year = st.slider("Année d'analyse", yrs[0], yrs[-1], yrs[-1])
     lc = series[year]
 
     c1, c2 = st.columns([1, 1])
@@ -43,8 +44,8 @@ def render() -> None:
     st.markdown("---")
     st.subheader("Comparaison de deux années")
     cc1, cc2 = st.columns(2)
-    y1 = cc1.selectbox("Année A", ANALYSIS_YEARS, index=0)
-    y2 = cc2.selectbox("Année B", ANALYSIS_YEARS, index=len(ANALYSIS_YEARS) - 1)
+    y1 = cc1.selectbox("Année A", yrs, index=0)
+    y2 = cc2.selectbox("Année B", yrs, index=len(yrs) - 1)
     ic1, ic2 = st.columns(2)
     ic1.image(maps.classification_to_rgb(series[y1]), caption=str(y1), use_column_width=True)
     ic2.image(maps.classification_to_rgb(series[y2]), caption=str(y2), use_column_width=True)
@@ -62,8 +63,6 @@ def render() -> None:
 
     # ── Matrice de confusion (sur la dernière classification) ──
     st.subheader("Matrice de confusion (illustration)")
-    bands = synthetic.landcover_to_bands(lc, seed=year)
-    topo = synthetic.generate_topography()
     # pseudo-prédiction bruitée pour illustration sans modèle chargé
     pred = lc.copy()
     flip = np.random.default_rng(0).random(lc.shape) < 0.08

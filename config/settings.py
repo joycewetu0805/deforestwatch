@@ -84,6 +84,9 @@ TOPO_FEATURES = ["altitude", "slope", "aspect"]
 # Ordre complet des features pour le modèle pixel-based (13 features)
 FEATURE_NAMES = BAND_ORDER + INDEX_ORDER + TOPO_FEATURES
 
+# Écosystème ciblé — le projet est recentré sur la forêt équatoriale
+ECOSYSTEM = "Forêt tropicale humide équatoriale — Bassin du Congo (Mai-Ndombe, RDC)"
+
 # Classes de couverture du sol
 LAND_COVER_CLASSES = {
     0: "Forêt dense",

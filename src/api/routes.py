@@ -14,7 +14,7 @@ from src.api.schemas import (
     OTPVerify, RegisterResponse, TokenResponse, UserLogin, UserOut, UserRegister,
 )
 from src.utils.helpers import load_json
-from src.utils import synthetic
+from src.data import provider
 
 router = APIRouter(prefix="/api/v1")
 
@@ -75,8 +75,19 @@ def refresh(refresh_token: str, db: Session = Depends(get_db)):
 # ── Données de déforestation (publiques) ──
 @router.get("/statistics", tags=["data"])
 def statistics():
-    """Statistiques de déforestation par année."""
-    return {"study_area": "Mai-Ndombe", "statistics": synthetic.yearly_statistics()}
+    """Statistiques de déforestation par année (source active : démo ou réelle)."""
+    return {
+        "study_area": "Mai-Ndombe — forêt équatoriale du Bassin du Congo",
+        "data_source": provider.source_name(),
+        "is_real_data": provider.is_real(),
+        "statistics": provider.yearly_statistics(),
+    }
+
+
+@router.get("/source", tags=["data"])
+def data_source():
+    """Métadonnées de la source de données active (démo synthétique ou réelle)."""
+    return provider.info()
 
 
 @router.get("/predictions/{year}", tags=["data"])
@@ -86,7 +97,7 @@ def predictions(year: int):
         raise HTTPException(status.HTTP_404_NOT_FOUND, f"Année hors période {ANALYSIS_YEARS[0]}–{ANALYSIS_YEARS[-1]}")
     import numpy as np
 
-    rmap = synthetic.risk_map()
+    rmap = provider.risk_map()
     high = int(np.sum(rmap > 70))
     return {
         "year": year,
