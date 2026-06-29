@@ -101,3 +101,39 @@ def source_badge(is_real: bool) -> None:
     else:
         st.markdown('<span class="dfw-badge demo">🧪 Données de démonstration</span>',
                     unsafe_allow_html=True)
+
+
+# Libellés <-> modes internes
+_MODE_LABELS = {"Auto": "auto", "Démo (synthétique)": "demo", "Données réelles": "real"}
+_LABEL_BY_MODE = {v: k for k, v in _MODE_LABELS.items()}
+
+
+def data_source_control() -> None:
+    """Toggle de la sidebar pour basculer démo ↔ données réelles à chaud."""
+    from src.data import provider
+
+    available = provider.has_real_data()
+    key = "dfw_data_mode"
+    if key not in st.session_state:
+        st.session_state[key] = _LABEL_BY_MODE.get(provider.mode(), "Auto")
+
+    st.sidebar.markdown("**🛰️ Source de données**")
+    choice = st.sidebar.radio(
+        "Source de données", list(_MODE_LABELS.keys()),
+        key=key, label_visibility="collapsed",
+    )
+    chosen = _MODE_LABELS[choice]
+
+    if chosen == "real" and not available:
+        st.sidebar.warning("Aucune image dans `data/raw/`. Lancez `make export-demo` "
+                           "(GeoTIFF de test) ou déposez vos vraies images.")
+
+    # Applique le changement et vide le cache des données
+    if chosen != provider.mode():
+        provider.switch(chosen)
+        st.cache_data.clear()
+        st.rerun()
+
+    effective = "réelle 🛰️" if provider.is_real() else "démo 🧪"
+    st.sidebar.caption(f"Active : **{effective}**"
+                       + (f" · {len(provider.years())} années" if provider.is_real() else ""))

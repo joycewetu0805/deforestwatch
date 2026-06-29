@@ -169,30 +169,71 @@ class RasterSource(DataSource):
 # ──────────────────────────────────────────────────────────────────────────
 _cached_source: DataSource | None = None
 
+# Override de mode à l'exécution (prioritaire sur la config .env) :
+#   'demo' → toujours synthétique
+#   'real' → données réelles si disponibles (sinon repli synthétique)
+#   'auto' / None → résolution automatique selon DEMO_MODE + présence de data/raw
+_forced_mode: str | None = None
+MODES = ("auto", "demo", "real")
+
+
+def set_mode(mode: str | None) -> str:
+    """Force le mode de données à l'exécution et renvoie le mode effectif appliqué.
+
+    Permet de basculer démo ↔ réel sans redémarrer ni éditer .env (utilisé par
+    le toggle du dashboard). `mode` ∈ {'auto','demo','real',None}.
+    """
+    global _forced_mode
+    if mode not in (None, *MODES):
+        raise ValueError(f"Mode inconnu : {mode!r} (attendu : {MODES} ou None).")
+    _forced_mode = None if mode in (None, "auto") else mode
+    reset_cache()
+    return current_mode()
+
+
+def current_mode() -> str:
+    """Mode demandé : 'demo', 'real' ou 'auto'."""
+    if _forced_mode in ("demo", "real"):
+        return _forced_mode
+    return "auto"
+
+
+def real_data_available() -> bool:
+    """Vrai si de vraies images sont présentes dans data/raw/."""
+    return RasterSource.has_data()
+
 
 def resolve_source(force: str | None = None, use_cache: bool = True) -> DataSource:
     """
     Renvoie la source de données active.
 
-    force : 'synthetic' ou 'raster' pour imposer une source (sinon auto).
+    Priorité : `force` explicite > override `set_mode` > config .env (DEMO_MODE).
+    force : 'synthetic' ou 'raster' pour imposer une source ponctuellement.
     """
     global _cached_source
     if use_cache and force is None and _cached_source is not None:
         return _cached_source
 
+    # Mode effectif demandé
     if force == "raster":
-        src: DataSource = RasterSource()
+        want_real = True
     elif force == "synthetic":
-        src = SyntheticSource()
-    elif not settings.demo_mode and RasterSource.has_data():
-        src = RasterSource()
-        log.info(f"Données réelles détectées dans {RAW_DIR} → source RasterSource "
-                 f"({len(src.years())} années).")
+        want_real = False
+    elif _forced_mode == "real":
+        want_real = True
+    elif _forced_mode == "demo":
+        want_real = False
+    else:  # auto : piloté par DEMO_MODE
+        want_real = not settings.demo_mode
+
+    if want_real and RasterSource.has_data():
+        src: DataSource = RasterSource()
+        log.info(f"Source = données réelles ({RAW_DIR}, {len(src.years())} années).")
     else:
         src = SyntheticSource()
-        if not settings.demo_mode:
-            log.warning("DEMO_MODE=false mais aucune donnée réelle trouvée dans "
-                        f"{RAW_DIR}/composites/ → repli sur la source synthétique.")
+        if want_real:
+            log.warning("Mode 'réel' demandé mais aucune donnée dans "
+                        f"{RAW_DIR}/composites/ → repli sur les données de démonstration.")
 
     if force is None:
         _cached_source = src
@@ -210,6 +251,8 @@ def describe_source() -> dict:
     return {
         "source": src.name,
         "is_real": src.is_real,
+        "mode": current_mode(),
+        "real_data_available": real_data_available(),
         "years": src.years(),
         "has_labels": src.has_labels(),
         "ecosystem": "Forêt tropicale humide équatoriale — Bassin du Congo (Mai-Ndombe)",

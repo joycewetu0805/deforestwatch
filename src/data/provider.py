@@ -11,7 +11,13 @@ from __future__ import annotations
 
 import numpy as np
 
-from src.data.sources import describe_source, resolve_source
+from src.data.sources import (
+    current_mode,
+    describe_source,
+    real_data_available,
+    resolve_source,
+    set_mode,
+)
 from src.utils import synthetic
 
 
@@ -25,6 +31,20 @@ def source_name() -> str:
 
 def is_real() -> bool:
     return source().is_real
+
+
+def mode() -> str:
+    """Mode demandé : 'demo', 'real' ou 'auto'."""
+    return current_mode()
+
+
+def switch(mode_name: str | None) -> str:
+    """Bascule le mode de données à l'exécution. Renvoie le mode effectif."""
+    return set_mode(mode_name)
+
+
+def has_real_data() -> bool:
+    return real_data_available()
 
 
 def years() -> list[int]:

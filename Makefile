@@ -15,6 +15,9 @@ help:
 	@echo "  make slides     Génère la présentation de soutenance (.pptx)"
 	@echo "  make export-demo Écrit des GeoTIFF de test dans data/raw/"
 	@echo "  make check-data Vérifie les vraies données dans data/raw/"
+	@echo "  make demo       Bascule .env en mode démo (synthétique)"
+	@echo "  make real       Bascule .env en mode réel (data/raw/)"
+	@echo "  make mode       Affiche le mode de données courant"
 	@echo "  make docker     Build + run via docker-compose"
 
 install:
@@ -55,6 +58,15 @@ export-demo:
 
 check-data:
 	python -m scripts.check_real_data
+
+demo:
+	python -m scripts.switch_mode demo
+
+real:
+	python -m scripts.switch_mode real
+
+mode:
+	python -m scripts.switch_mode status
 
 docker:
 	docker-compose up --build

@@ -49,8 +49,10 @@ def main() -> None:
         pages["⚙️ Admin"] = admin.render
 
     choice = st.sidebar.radio("Navigation", list(pages.keys()))
-    logout_button()
     st.sidebar.markdown("---")
+    ui.data_source_control()
+    st.sidebar.markdown("---")
+    logout_button()
     st.sidebar.caption("Sentinel-2/ESA · Landsat/NASA · UPC FASI · 2026")
 
     pages[choice]()

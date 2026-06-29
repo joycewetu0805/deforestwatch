@@ -12,6 +12,24 @@ def test_demo_mode_uses_synthetic():
     assert not src.is_real
 
 
+def test_set_mode_switches_and_falls_back():
+    from src.data.sources import set_mode
+
+    try:
+        # 'real' sans données dans data/raw → repli synthétique mais mode mémorisé
+        set_mode("real")
+        assert provider.mode() == "real"
+        assert provider.is_real() is False          # repli (pas de data/raw)
+        assert provider.info()["mode"] == "real"
+
+        set_mode("demo")
+        assert provider.mode() == "demo"
+        assert provider.source_name() == "synthetic"
+    finally:
+        set_mode("auto")                            # restaure l'état par défaut
+    assert provider.mode() == "auto"
+
+
 def test_synthetic_source_shapes():
     src = SyntheticSource()
     y = src.years()[-1]

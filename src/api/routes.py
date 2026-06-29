@@ -90,6 +90,16 @@ def data_source():
     return provider.info()
 
 
+@router.post("/admin/source/{mode}", tags=["admin"])
+def switch_source(mode: str, _: User = Depends(auth.require_role("admin"))):
+    """Bascule la source de données à chaud : mode ∈ {auto, demo, real} (admin)."""
+    if mode not in ("auto", "demo", "real"):
+        raise HTTPException(status.HTTP_400_BAD_REQUEST,
+                            "Mode invalide (attendu : auto, demo, real).")
+    provider.switch(mode)
+    return provider.info()
+
+
 @router.get("/predictions/{year}", tags=["data"])
 def predictions(year: int):
     """Synthèse de la carte de risque pour une année (zones critiques)."""

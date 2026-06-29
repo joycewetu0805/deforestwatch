@@ -234,6 +234,18 @@ Toute l'application (datasets ML, statistiques, dashboard, API `/api/v1/source`)
 bascule alors sur les données réelles. Vous pouvez commencer avec **une seule
 année** pour valider la chaîne, puis enrichir progressivement.
 
+**Basculer démo ↔ réel** — trois façons, de la plus simple à la plus permanente :
+
+| Méthode | Commande / action | Portée |
+|---|---|---|
+| 🖱️ Toggle dashboard | Barre latérale → « Source de données » (Auto / Démo / Réelle) | Bascule **à chaud**, sans redémarrer |
+| 🔌 API (admin) | `POST /api/v1/admin/source/{auto\|demo\|real}` | Process API en cours |
+| 💾 Persistant (`.env`) | `make demo` · `make real` · `make mode` | Tous les démarrages suivants |
+
+Le mode **Auto** choisit automatiquement : données réelles si présentes dans
+`data/raw/`, sinon démo. Si vous demandez « réel » sans données disponibles,
+l'application fait un **repli transparent** sur la démo.
+
 **Collecte des vraies images** via `scripts/gee_export.py` :
 
 ```bash
