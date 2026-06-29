@@ -4,6 +4,8 @@
 
 > 🌳 **Écosystème ciblé** : forêt tropicale humide **équatoriale** du Bassin du Congo (province du Mai-Ndombe).
 
+![CI](https://github.com/joycewetu0805/deforestwatch/actions/workflows/ci.yml/badge.svg)
+
 Projet de fin d'études — L3 LMD FASI, Université Protestante au Congo  
 Orientation : Data Science  
 Auteur : Joyce A. WETUNGANI
@@ -232,15 +234,28 @@ Toute l'application (datasets ML, statistiques, dashboard, API `/api/v1/source`)
 bascule alors sur les données réelles. Vous pouvez commencer avec **une seule
 année** pour valider la chaîne, puis enrichir progressivement.
 
+**Collecte des vraies images** via `scripts/gee_export.py` :
+
+```bash
+# Export Sentinel-2 depuis Google Earth Engine vers Google Drive (production)
+python -m scripts.gee_export --drive
+# ... ou téléchargement direct (zone réduite, aperçu)
+python -m scripts.gee_export --download --scale 100
+
+# Tester toute la chaîne réelle SANS compte GEE (écrit des GeoTIFF synthétiques)
+make export-demo && make check-data
+```
+
 ### Mémoire académique
 
 ```bash
 make memoir      # génère docs/memoire_deforestwatch.docx (UPC/FASI)
+make slides      # génère docs/soutenance_deforestwatch.pptx (16 slides)
 ```
 
-Le mémoire (page de garde, chapitres, tableaux, bibliographie, annexes) est
-pré-rempli à partir du projet réellement implémenté ; les résultats chiffrés
-sont à confirmer sur données réelles.
+Le mémoire (page de garde, chapitres, tableaux, bibliographie, annexes) et la
+présentation de soutenance sont pré-remplis à partir du projet réellement
+implémenté ; les résultats chiffrés sont à confirmer sur données réelles.
 
 ### Docker
 

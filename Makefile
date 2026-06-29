@@ -12,6 +12,8 @@ help:
 	@echo "  make frontend   Démarre le frontend React (port 5173)"
 	@echo "  make report     Génère le rapport de synthèse"
 	@echo "  make memoir     Génère le mémoire académique (.docx)"
+	@echo "  make slides     Génère la présentation de soutenance (.pptx)"
+	@echo "  make export-demo Écrit des GeoTIFF de test dans data/raw/"
 	@echo "  make check-data Vérifie les vraies données dans data/raw/"
 	@echo "  make docker     Build + run via docker-compose"
 
@@ -44,6 +46,12 @@ report:
 
 memoir:
 	python -m scripts.generate_memoir
+
+slides:
+	python -m scripts.generate_slides
+
+export-demo:
+	python -m scripts.gee_export --demo-geotiff
 
 check-data:
 	python -m scripts.check_real_data
