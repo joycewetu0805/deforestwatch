@@ -1,2 +1,39 @@
+# ── OS ──
 .DS_Store
+
+# ── Secrets ──
+.env
+config/gee-key.json
 files/deforestwatch-*.json
+.streamlit/secrets.toml
+
+# ── Python ──
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+venv/
+.venv/
+env/
+.pytest_cache/
+.coverage
+htmlcov/
+.ipynb_checkpoints/
+
+# ── Données (volumineuses, non versionnées) ──
+data/raw/*
+data/processed/*
+data/models/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!data/models/.gitkeep
+
+# ── Node / Frontend ──
+node_modules/
+frontend/dist/
+frontend/node_modules/
+
+# ── Logs ──
+*.log
+logs/
+spark-warehouse/
