@@ -8,6 +8,7 @@ import streamlit as st
 from config.settings import PIXEL_AREA_HA, settings
 from src.data import provider
 from src.visualization import maps
+from streamlit_app.components import ui
 
 
 @st.cache_data(ttl=600)
@@ -16,8 +17,9 @@ def _risk():
 
 
 def render() -> None:
-    st.title("🔮 Prédiction des zones à risque")
-    st.caption("Probabilité de déforestation future par pixel (modèle XGBoost de risque).")
+    ui.header("Prédiction des zones à risque",
+              "Probabilité de déforestation future par pixel (modèle de risque XGBoost)",
+              logo="🔮")
 
     risk = _risk()
     threshold = st.slider("Seuil de risque minimal affiché", 0, 100, 50)

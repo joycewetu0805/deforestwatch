@@ -9,6 +9,7 @@ import pandas as pd
 import streamlit as st
 
 from streamlit_app.components.auth import DEMO_USERS, current_role
+from streamlit_app.components import ui
 
 
 def render() -> None:
@@ -16,7 +17,9 @@ def render() -> None:
         st.error("Accès réservé aux administrateurs.")
         return
 
-    st.title("⚙️ Back-office administrateur")
+    ui.header("Back-office administrateur",
+              "Utilisateurs · journaux d'API · métriques d'usage · modèles déployés",
+              logo="⚙️")
 
     tab1, tab2, tab3, tab4 = st.tabs(
         ["👥 Utilisateurs", "📜 Logs", "📈 Métriques d'usage", "🤖 Modèles"]

@@ -14,7 +14,7 @@ from pathlib import Path
 import joblib
 import numpy as np
 
-from config.settings import GRID_SIZE, MODELS_DIR
+from config.settings import MODELS_DIR
 from src.utils.helpers import ensure_dir
 from src.utils.logger import get_logger
 from src.utils import synthetic
@@ -38,11 +38,7 @@ def _risk_features(year_idx: int = -2, seed: int = 42):
     deforested_now = lc_now >= 2
     forest_now = lc_now <= 1
 
-    # distances approximatives
-    def dist_to(mask):
-        from src.utils.synthetic import risk_map  # réutilise la dilatation
-        return _edt(mask)
-
+    # distances approximatives (transformée de distance par dilatation, voir _edt)
     dist_def = _edt(deforested_now)
     road = np.abs(xx - yy) < 4
     dist_road = _edt(road)

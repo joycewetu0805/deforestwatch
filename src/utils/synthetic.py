@@ -13,10 +13,7 @@ import numpy as np
 
 from config.settings import (
     ANALYSIS_YEARS,
-    BAND_ORDER,
     GRID_SIZE,
-    INDEX_ORDER,
-    NUM_CLASSES,
     PIXEL_AREA_HA,
 )
 

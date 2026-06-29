@@ -28,7 +28,7 @@ from pathlib import Path
 
 import numpy as np
 
-from config.settings import ANALYSIS_YEARS, RAW_DIR, settings
+from config.settings import RAW_DIR, settings
 from src.utils.logger import get_logger
 from src.utils import synthetic
 

@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from config.settings import ANALYSIS_YEARS, settings
 from src.api import auth
-from src.api.database import ModelRegistry, User, get_db
+from src.api.database import User, get_db
 from src.api.schemas import (
     OTPVerify, RegisterResponse, TokenResponse, UserLogin, UserOut, UserRegister,
 )

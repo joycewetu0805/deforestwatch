@@ -8,8 +8,6 @@ reste exécutable sans compte GEE.
 
 from __future__ import annotations
 
-from typing import Optional
-
 import numpy as np
 
 from config.settings import (
@@ -83,9 +81,10 @@ class GEECollector:
             .filter(ee.Filter.lt("CLOUDY_PIXEL_PERCENTAGE", 40))
             .map(self._mask_s2_clouds)
         )
-        composite = col.median().select(["B2", "B3", "B4", "B8", "B11", "B12"])
-        log.info(f"Composite GEE {year} prêt (export nécessaire pour récupérer l'array).")
-        # En production : export vers GCS/Drive puis lecture rasterio.
+        # Composite médian saison sèche ; l'export vers data/raw/ est géré par
+        # scripts/gee_export.py (lecture ensuite via rasterio / RasterSource).
+        self._last_composite = col.median().select(["B2", "B3", "B4", "B8", "B11", "B12"])
+        log.info(f"Composite GEE {year} prêt (utilisez scripts.gee_export pour le télécharger).")
         return self._synthetic_composite(year)
 
     def _mask_s2_clouds(self, image):

@@ -8,6 +8,7 @@ import streamlit as st
 from config.settings import PIXEL_AREA_HA
 from src.data import provider
 from src.visualization import charts, maps, timeline
+from streamlit_app.components import ui
 
 
 @st.cache_data(ttl=600)
@@ -21,29 +22,27 @@ def _risk():
 
 
 def render() -> None:
-    st.title("📊 Dashboard — Surveillance de la forêt équatoriale")
-    st.caption("Province du Mai-Ndombe (Inongo), RDC · Bassin du Congo · Sentinel-2 2015–2025")
-
-    if provider.is_real():
-        st.success("🛰️ Source : **vraies images satellites** (data/raw/).")
-    else:
-        st.info("🧪 Source : **données de démonstration** (synthétiques). "
-                "Déposez de vraies images dans `data/raw/` et mettez `DEMO_MODE=false` "
-                "pour basculer sur les données réelles.")
+    ui.header("Surveillance de la forêt équatoriale",
+              "Province du Mai-Ndombe (Inongo) · Bassin du Congo · Sentinel-2 2015–2025",
+              logo="📊")
+    ui.source_badge(provider.is_real())
 
     stats = _stats()
     last, first = stats[-1], stats[0]
     total_loss = sum(s["forest_loss_ha"] for s in stats)
+    risk = _risk()
 
     # ── KPIs ──
+    st.write("")
     c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Surface forestière actuelle", f"{last['total_forest_ha']:,.0f} ha")
-    c2.metric("Perte totale 2015–2025", f"{total_loss:,.0f} ha",
-              delta=f"-{100 * total_loss / first['total_forest_ha']:.1f} %", delta_color="inverse")
-    c3.metric("Taux annuel moyen",
-              f"{np.mean([s['deforestation_rate'] for s in stats[1:]]):.2f} %")
-    risk = _risk()
-    c4.metric("Zones à risque élevé", f"{int(np.sum(risk > 70)) * PIXEL_AREA_HA:,.0f} ha")
+    ui.kpi(c1, "Surface forestière actuelle", f"{last['total_forest_ha']:,.0f} ha")
+    ui.kpi(c2, "Perte totale 2015–2025", f"{total_loss:,.0f} ha",
+           delta=f"▼ {100 * total_loss / first['total_forest_ha']:.1f} % depuis 2015",
+           delta_color=ui.ALERT)
+    ui.kpi(c3, "Taux annuel moyen",
+           f"{np.mean([s['deforestation_rate'] for s in stats[1:]]):.2f} %", delta_color=ui.AMBER)
+    ui.kpi(c4, "Zones à risque élevé", f"{int(np.sum(risk > 70)) * PIXEL_AREA_HA:,.0f} ha",
+           delta="risque > 70/100", delta_color=ui.CYAN)
 
     st.markdown("---")
 

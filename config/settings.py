@@ -4,7 +4,6 @@ Toutes les variables d'environnement et constantes du projet.
 """
 
 from pydantic_settings import BaseSettings
-from pydantic import Field
 from typing import Optional
 from pathlib import Path
 

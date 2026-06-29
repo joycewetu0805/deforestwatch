@@ -16,6 +16,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import streamlit as st  # noqa: E402
 
 from streamlit_app.components.auth import current_role, login_form, logout_button  # noqa: E402
+from streamlit_app.components import ui  # noqa: E402
 from streamlit_app.views import admin, analysis, dashboard, prediction  # noqa: E402
 
 st.set_page_config(
@@ -25,26 +26,19 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# Style sombre cohérent avec le frontend React
-st.markdown(
-    """
-    <style>
-      .stApp { background-color: #0A0F1C; }
-      h1, h2, h3 { color: #10B981; }
-      [data-testid="stMetricValue"] { color: #06B6D4; }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
-
 
 def main() -> None:
     if not login_form():
         return
 
-    st.sidebar.title("🌍 DeforestWatch-DRC")
-    st.sidebar.caption(f"Connecté : {st.session_state.get('user_name')} "
-                       f"({st.session_state.get('user_role')})")
+    ui.inject_css()
+    st.sidebar.markdown(
+        "<div style='font-size:1.3rem;font-weight:800;color:#10B981;'>🌍 DeforestWatch</div>"
+        "<div style='color:#94A3B8;font-size:.8rem;margin-bottom:8px;'>RDC · Mai-Ndombe</div>",
+        unsafe_allow_html=True,
+    )
+    st.sidebar.caption(f"👤 {st.session_state.get('user_name')} · "
+                       f"{st.session_state.get('user_role')}")
 
     pages = {
         "📊 Dashboard": dashboard.render,
