@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import {
   ArrowLeft, Layers, TriangleAlert, TreePine, Activity, RefreshCw,
 } from 'lucide-react'
+import TimeMachine from './TimeMachine.jsx'
 
 // Données de repli si l'API FastAPI n'est pas joignable (mode statique)
 const FALLBACK_STATS = Array.from({ length: 11 }, (_, i) => {
@@ -192,6 +193,8 @@ export default function Dashboard({ onBack }) {
           <StatCard icon={TriangleAlert} label="Alertes actives" accent="text-amber-400" value="12" sub="cette semaine" />
           <StatCard icon={Layers} label="Période suivie" accent="text-satellite" value={`${first.year}–${last.year}`} sub="composites annuels" />
         </div>
+
+        <TimeMachine stats={stats} />
 
         <div className="grid gap-6 lg:grid-cols-2">
           <Panel title="Évolution de la couverture forestière"><LineChart data={stats} /></Panel>
