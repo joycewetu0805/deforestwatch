@@ -13,6 +13,7 @@ help:
 	@echo "  make report     Génère le rapport de synthèse"
 	@echo "  make memoir     Génère le mémoire académique (.docx)"
 	@echo "  make slides     Génère la présentation de soutenance (.pptx)"
+	@echo "  make guide      Génère le guide complet (GUIDE.md + docs/GUIDE.pdf)"
 	@echo "  make export-demo Écrit des GeoTIFF de test dans data/raw/"
 	@echo "  make check-data Vérifie les vraies données dans data/raw/"
 	@echo "  make demo       Bascule .env en mode démo (synthétique)"
@@ -52,6 +53,9 @@ memoir:
 
 slides:
 	python -m scripts.generate_slides
+
+guide:
+	python -m scripts.generate_guide
 
 export-demo:
 	python -m scripts.gee_export --demo-geotiff
