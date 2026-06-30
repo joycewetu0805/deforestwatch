@@ -1,6 +1,13 @@
 # 🌍 DeforestWatch-DRC
 
-**Surveillance et prédiction de la déforestation en République Démocratique du Congo par imagerie satellite et Machine Learning**
+**Surveillance et prédiction de la déforestation de la forêt équatoriale du Bassin du Congo (RDC) par imagerie satellite et Machine Learning**
+
+> 🌳 **Écosystème ciblé** : forêt tropicale humide **équatoriale** du Bassin du Congo (province du Mai-Ndombe).
+
+![CI](https://github.com/joycewetu0805/deforestwatch/actions/workflows/ci.yml/badge.svg)
+
+> 📘 **Guide complet & mode d'emploi** : [`GUIDE.md`](GUIDE.md) (ou `docs/GUIDE.pdf`) —
+> tout le projet expliqué pas à pas, dont le téléchargement des données depuis Google Earth Engine.
 
 Projet de fin d'études — L3 LMD FASI, Université Protestante au Congo  
 Orientation : Data Science  
@@ -116,14 +123,22 @@ deforest-watch/
 │   ├── 03_modeling.ipynb        # Entraînement et comparaison
 │   └── 04_results.ipynb         # Résultats et visualisations
 ├── streamlit_app/
-│   ├── app.py                   # Dashboard principal
-│   ├── pages/
-│   │   ├── dashboard.py         # Vue d'ensemble
+│   ├── app.py                   # Dashboard principal (login 2FA + navigation)
+│   ├── views/                   # Pages (dossier nommé "views" pour ne pas
+│   │   ├── dashboard.py         #  déclencher le multipage auto de Streamlit)
 │   │   ├── analysis.py          # Analyse exploratoire
 │   │   ├── prediction.py        # Prédictions
 │   │   └── admin.py             # Backoffice admin
 │   └── components/
 │       └── auth.py              # Composant d'authentification
+├── frontend/                    # Frontend React (CongoForest Watch)
+│   ├── package.json             # Vite + React + Tailwind
+│   └── src/
+│       ├── App.jsx
+│       └── components/
+│           ├── LandingPage.jsx  # Landing page animée
+│           └── Dashboard.jsx    # Monitoring (fetch API + repli statique)
+├── scripts/                     # Automatisation (seed, collect, train, report)
 ├── tests/
 │   ├── test_preprocessing.py
 │   ├── test_models.py
@@ -167,7 +182,25 @@ cp .env.example .env
 earthengine authenticate
 ```
 
-### Lancement
+### Démarrage rapide — mode démo (sans Google Earth Engine)
+
+Le projet fonctionne **clé en main** grâce à un mode démo (`DEMO_MODE=true`) qui
+génère des données satellites synthétiques réalistes. Aucune clé API ni compte
+GEE n'est requis pour faire tourner l'API, le dashboard et les modèles.
+
+```bash
+pip install -r requirements.txt
+make seed        # génère datasets synthétiques + entraîne les modèles
+make api         # API FastAPI       → http://localhost:8000/docs
+make dashboard   # Dashboard Streamlit → http://localhost:8501
+make frontend    # Frontend React     → http://localhost:5173
+```
+
+Comptes de démonstration du dashboard :
+- **admin@deforestwatch.cd** / `admin123` — code 2FA : `123456`
+- **user@deforestwatch.cd** / `user123` — code 2FA : `123456`
+
+### Lancement (détail)
 
 ```bash
 # Backend API
@@ -176,9 +209,68 @@ uvicorn src.api.main:app --reload --port 8000
 # Dashboard Streamlit
 streamlit run streamlit_app/app.py --server.port 8501
 
+# Frontend React
+cd frontend && npm install && npm run dev
+
 # Tests
-pytest tests/ -v
+pytest tests/ -v --cov=src
 ```
+
+> **Passage en production** : renseignez les clés dans `.env`
+> (GEE, Supabase, OpenWeather, JWT) et mettez `DEMO_MODE=false`. Les modules de
+> collecte basculent automatiquement sur les vraies sources (Sentinel-2, Hansen,
+> SRTM, OpenWeatherMap) et la base sur PostgreSQL/Supabase.
+
+### Brancher de vraies images satellites
+
+Le projet est conçu pour passer des données de démonstration aux **vraies
+images** sans modifier le code. Une couche d'abstraction (`src/data/sources.py`)
+résout automatiquement la source active :
+
+1. Déposez vos GeoTIFF dans `data/raw/` selon le format décrit dans
+   [`data/raw/README.md`](data/raw/README.md) (composites 6 bandes par année,
+   cartes de classes optionnelles, topographie).
+2. Vérifiez le jeu de données : `make check-data`.
+3. Mettez `DEMO_MODE=false` dans `.env`.
+
+Toute l'application (datasets ML, statistiques, dashboard, API `/api/v1/source`)
+bascule alors sur les données réelles. Vous pouvez commencer avec **une seule
+année** pour valider la chaîne, puis enrichir progressivement.
+
+**Basculer démo ↔ réel** — trois façons, de la plus simple à la plus permanente :
+
+| Méthode | Commande / action | Portée |
+|---|---|---|
+| 🖱️ Toggle dashboard | Barre latérale → « Source de données » (Auto / Démo / Réelle) | Bascule **à chaud**, sans redémarrer |
+| 🔌 API (admin) | `POST /api/v1/admin/source/{auto\|demo\|real}` | Process API en cours |
+| 💾 Persistant (`.env`) | `make demo` · `make real` · `make mode` | Tous les démarrages suivants |
+
+Le mode **Auto** choisit automatiquement : données réelles si présentes dans
+`data/raw/`, sinon démo. Si vous demandez « réel » sans données disponibles,
+l'application fait un **repli transparent** sur la démo.
+
+**Collecte des vraies images** via `scripts/gee_export.py` :
+
+```bash
+# Export Sentinel-2 depuis Google Earth Engine vers Google Drive (production)
+python -m scripts.gee_export --drive
+# ... ou téléchargement direct (zone réduite, aperçu)
+python -m scripts.gee_export --download --scale 100
+
+# Tester toute la chaîne réelle SANS compte GEE (écrit des GeoTIFF synthétiques)
+make export-demo && make check-data
+```
+
+### Mémoire académique
+
+```bash
+make memoir      # génère docs/memoire_deforestwatch.docx (UPC/FASI)
+make slides      # génère docs/soutenance_deforestwatch.pptx (16 slides)
+```
+
+Le mémoire (page de garde, chapitres, tableaux, bibliographie, annexes) et la
+présentation de soutenance sont pré-remplis à partir du projet réellement
+implémenté ; les résultats chiffrés sont à confirmer sur données réelles.
 
 ### Docker
 

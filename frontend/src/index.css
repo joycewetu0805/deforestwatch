@@ -1,0 +1,28 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  background-color: #0A0F1C;
+  color: #E2E8F0;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+@keyframes dataflow {
+  to { stroke-dashoffset: -20; }
+}
+.dataflow {
+  stroke-dasharray: 4 6;
+  animation: dataflow 1s linear infinite;
+}
+
+@keyframes glow {
+  0%, 100% { text-shadow: 0 0 14px rgba(16, 185, 129, 0.5); }
+  50% { text-shadow: 0 0 28px rgba(16, 185, 129, 0.85); }
+}
+.glow { animation: glow 3s ease-in-out infinite; }
