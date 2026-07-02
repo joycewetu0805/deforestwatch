@@ -202,6 +202,29 @@ def build() -> Presentation:
         "Aucune modification de code : toute l'application bascule sur le réel.",
     ])
 
+    # 13b. Impact & plus-value (contexte congolais)
+    _title_slide(prs, "Plus-value dans le contexte congolais")
+    _bullets(prs.slides[-1], [
+        "RDC : ~60 % de la forêt du Bassin du Congo ; déforestation diffuse "
+        "(brûlis, charbon de bois) mal captée par les outils globaux.",
+        "Mai-Ndombe : province pilote REDD+ -> réduire la déforestation a une "
+        "valeur financière directe (paiements aux résultats).",
+        "D'un outil de CONSTAT à un outil d'ACTION : prédictif, en français, "
+        "avec signalement citoyen et impact carbone.",
+        "Souveraineté des données : un outil conçu et maîtrisé localement.",
+    ])
+
+    # 13c. Impact par acteur
+    _title_slide(prs, "Impact concret, par acteur")
+    _bullets(prs.slides[-1], [
+        "Ministère / DIAF : brique d'un système national de surveillance (MRV).",
+        "Gardes forestiers / ICCN : alertes géolocalisées + radar (sous les nuages).",
+        "Province du Mai-Ndombe : ciblage des secteurs prioritaires.",
+        "Communautés locales : signalement participatif.",
+        "ONG & projets carbone : quantification pour les crédits (REDD+).",
+        "Bailleurs (CAFI, Banque mondiale) : transparence et paiements aux résultats.",
+    ])
+
     # 14. Limites
     _title_slide(prs, "Limites")
     _bullets(prs.slides[-1], [
