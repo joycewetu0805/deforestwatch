@@ -26,6 +26,38 @@ def _series_cached():
     return provider.landcover_series()
 
 
+@st.cache_data(ttl=600)
+def _carbon():
+    from src.analysis import carbon
+    return carbon.summary(), carbon.yearly_carbon()
+
+
+@st.cache_data(ttl=600)
+def _radar_coverage():
+    from src.data.radar import cloud_penetration_demo
+    from config.settings import ANALYSIS_YEARS
+    return cloud_penetration_demo(ANALYSIS_YEARS[-1])
+
+
+def _carbon_impact():
+    st.subheader("🌍 Impact climatique — émissions de CO₂")
+    s, yearly = _carbon()
+    eq = s["equivalents"]
+    c1, c2, c3, c4 = st.columns(4)
+    ui.kpi(c1, "CO₂ total émis", f"{s['total_co2_mt']:,.1f} Mt",
+           delta="depuis la déforestation 2015–2025", delta_color=ui.ALERT)
+    ui.kpi(c2, "Équivalent voitures", f"{eq['cars_year']:,}",
+           delta="voitures pendant 1 an", delta_color=ui.AMBER)
+    ui.kpi(c3, "Arbres pour compenser", f"{eq['trees_year'] / 1e6:,.0f} M",
+           delta="arbres · 1 an", delta_color=ui.EMERALD)
+    rc = _radar_coverage()
+    ui.kpi(c4, "Atout radar (Sentinel-1)", f"+{rc['gain_pct']:.0f} %",
+           delta=f"pixels vs optique ({rc['optical_usable_pct']:.0f}% sous nuages)",
+           delta_color=ui.CYAN)
+    st.caption(f"Hypothèse : {s['assumptions']['co2_t_per_ha']:.0f} t CO₂/ha "
+               "(biomasse aérienne forêt tropicale du Bassin du Congo · IPCC).")
+
+
 def _time_machine(stats):
     """Time-lapse : la forêt qui recule, avec curseur d'année et comparateur 2015."""
     st.subheader("🛰️ Machine à remonter le temps — la forêt disparaît sous vos yeux")
@@ -75,6 +107,11 @@ def render() -> None:
            f"{np.mean([s['deforestation_rate'] for s in stats[1:]]):.2f} %", delta_color=ui.AMBER)
     ui.kpi(c4, "Zones à risque élevé", f"{int(np.sum(risk > 70)) * PIXEL_AREA_HA:,.0f} ha",
            delta="risque > 70/100", delta_color=ui.CYAN)
+
+    st.markdown("---")
+
+    # ── Impact climatique (carbone) ──
+    _carbon_impact()
 
     st.markdown("---")
 

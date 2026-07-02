@@ -19,6 +19,9 @@ from src.api.schemas import (
 from src.utils.helpers import load_json
 from src.data import provider
 from src.analysis import alerts as alerts_engine
+from src.analysis import carbon as carbon_engine
+from src.analysis import notify as notify_engine
+from src.data import radar as radar_engine
 from src.visualization import maps
 
 router = APIRouter(prefix="/api/v1")
@@ -172,6 +175,27 @@ def list_alerts(severity: str | None = None, year: int | None = None,
 def alerts_summary():
     """Synthèse des alertes : compte par sévérité, surface perdue, année pire."""
     return alerts_engine.summary()
+
+
+@router.get("/carbon", tags=["impact"])
+def carbon():
+    """Émissions de CO₂ liées à la déforestation (par année + synthèse + équivalences)."""
+    return {"yearly": carbon_engine.yearly_carbon(), "summary": carbon_engine.summary()}
+
+
+@router.get("/radar/coverage/{year}", tags=["impact"])
+def radar_coverage(year: int):
+    """Atout radar : % de pixels exploitables optique (nuages) vs radar Sentinel-1."""
+    if year not in ANALYSIS_YEARS:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Année indisponible")
+    return radar_engine.cloud_penetration_demo(year)
+
+
+@router.post("/admin/notify", tags=["admin"])
+def notify_alerts(min_severity: str = "élevée",
+                  _: User = Depends(auth.require_role("admin"))):
+    """Construit (et envoie si SMTP configuré) le digest e-mail des alertes (admin)."""
+    return notify_engine.notify_critical(min_severity)
 
 
 @router.post("/reports", response_model=ReportOut, tags=["alerts"])
