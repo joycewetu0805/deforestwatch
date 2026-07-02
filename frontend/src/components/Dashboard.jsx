@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
   ArrowLeft, Layers, TriangleAlert, TreePine, Activity, RefreshCw,
+  User as UserIcon, LogOut,
 } from 'lucide-react'
 import TimeMachine from './TimeMachine.jsx'
 import AlertsPanel from './AlertsPanel.jsx'
@@ -149,7 +150,7 @@ function RiskGrid() {
   )
 }
 
-export default function Dashboard({ onBack }) {
+export default function Dashboard({ onBack, user, onLogout }) {
   const [stats, setStats] = useState(FALLBACK_STATS)
   const [live, setLive] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -189,6 +190,18 @@ export default function Dashboard({ onBack }) {
           <span className={`rounded-full px-3 py-1 text-xs ${live ? 'bg-emerald-glow/20 text-emerald-glow' : 'bg-slate-700 text-slate-400'}`}>
             {live ? '● API connectée' : '○ Mode statique'}
           </span>
+          {user && (
+            <span className="hidden items-center gap-1 rounded-full bg-white/5 px-3 py-1 text-xs text-slate-300 md:flex">
+              <UserIcon size={12} /> {user.name}
+              {user.role === 'admin' && <b className="text-emerald-glow">· admin</b>}
+            </span>
+          )}
+          {onLogout && (
+            <button onClick={onLogout} title="Se déconnecter"
+              className="inline-flex items-center gap-1 rounded-lg border border-white/10 px-3 py-1 text-xs text-slate-400 hover:border-alert/40 hover:text-alert">
+              <LogOut size={13} /> Déconnexion
+            </button>
+          )}
         </div>
       </header>
 
