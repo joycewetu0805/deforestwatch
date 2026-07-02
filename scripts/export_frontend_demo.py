@@ -15,7 +15,6 @@ from __future__ import annotations
 
 import io
 import json
-from pathlib import Path
 
 from config.settings import PROJECT_ROOT
 from src.data import provider
@@ -48,8 +47,16 @@ def main() -> None:
         (lc_dir / f"{year}.png").write_bytes(_png(maps.classification_to_rgb(lc)))
     (OUT / "risk.png").write_bytes(_png(maps.risk_to_rgb(provider.risk_map())))
 
+    # Alertes de déforestation (pour le panneau du frontend, mode statique)
+    from src.analysis import alerts as alerts_engine
+
+    active = [a.to_dict() for a in alerts_engine.active_alerts()]
+    (OUT / "alerts.json").write_text(json.dumps(active, ensure_ascii=False), encoding="utf-8")
+    (OUT / "alerts_summary.json").write_text(
+        json.dumps(alerts_engine.summary(), ensure_ascii=False), encoding="utf-8")
+
     log.info(f"Assets démo exportés dans {OUT} : "
-             f"{len(series)} cartes + stats.json + risk.png")
+             f"{len(series)} cartes + stats.json + risk.png + {len(active)} alertes")
 
 
 if __name__ == "__main__":

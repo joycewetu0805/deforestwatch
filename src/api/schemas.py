@@ -74,3 +74,36 @@ class LogOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class AlertOut(BaseModel):
+    id: str
+    sector: str
+    lat: float
+    lon: float
+    year: int
+    area_lost_ha: float
+    severity: str
+    forest_before_ha: float
+    forest_after_ha: float
+
+
+class ReportIn(BaseModel):
+    lat: float = Field(ge=-90, le=90)
+    lon: float = Field(ge=-180, le=180)
+    description: str = Field(min_length=3, max_length=1000)
+    reporter: Optional[str] = None
+
+
+class ReportOut(BaseModel):
+    id: int
+    lat: float
+    lon: float
+    description: str
+    reporter: Optional[str] = None
+    severity: str
+    status: str
+    created_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True

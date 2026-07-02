@@ -54,6 +54,19 @@ class Prediction(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
+class Report(Base):
+    """Signalement de déforestation soumis par un utilisateur ou citoyen."""
+    __tablename__ = "reports"
+    id = Column(Integer, primary_key=True)
+    lat = Column(Float, nullable=False)
+    lon = Column(Float, nullable=False)
+    description = Column(String, nullable=False)
+    reporter = Column(String, nullable=True)      # email ou nom (optionnel)
+    severity = Column(String, default="à vérifier")
+    status = Column(String, default="nouveau")    # nouveau / en cours / résolu
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
 class ApiLog(Base):
     __tablename__ = "api_logs"
     id = Column(Integer, primary_key=True)

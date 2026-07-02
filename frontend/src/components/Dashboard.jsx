@@ -3,6 +3,7 @@ import {
   ArrowLeft, Layers, TriangleAlert, TreePine, Activity, RefreshCw,
 } from 'lucide-react'
 import TimeMachine from './TimeMachine.jsx'
+import AlertsPanel from './AlertsPanel.jsx'
 
 // Données de repli si l'API FastAPI n'est pas joignable (mode statique)
 const FALLBACK_STATS = Array.from({ length: 11 }, (_, i) => {
@@ -201,6 +202,8 @@ export default function Dashboard({ onBack }) {
         </div>
 
         <TimeMachine stats={stats} />
+
+        <AlertsPanel />
 
         <div className="grid gap-6 lg:grid-cols-2">
           <Panel title="Évolution de la couverture forestière"><LineChart data={stats} /></Panel>
