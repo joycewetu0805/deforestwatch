@@ -17,7 +17,7 @@ import streamlit as st  # noqa: E402
 
 from streamlit_app.components.auth import current_role, login_form, logout_button  # noqa: E402
 from streamlit_app.components import ui  # noqa: E402
-from streamlit_app.views import admin, analysis, dashboard, prediction  # noqa: E402
+from streamlit_app.views import admin, alerts, analysis, dashboard, prediction  # noqa: E402
 
 st.set_page_config(
     page_title="DeforestWatch-DRC",
@@ -42,6 +42,7 @@ def main() -> None:
 
     pages = {
         "📊 Dashboard": dashboard.render,
+        "🚨 Alertes": alerts.render,
         "🔬 Analyse": analysis.render,
         "🔮 Prédictions": prediction.render,
     }

@@ -208,6 +208,10 @@ def document() -> list[tuple]:
         "GET  /api/v1/source — source de donnees active (demo/reel)",
         "GET  /api/v1/maps/landcover/{year} — carte de couverture (PNG) d'une annee",
         "GET  /api/v1/maps/risk — carte de risque (PNG)",
+        "GET  /api/v1/alerts — alertes de deforestation detectees (filtres severite/annee)",
+        "GET  /api/v1/alerts/summary — synthese des alertes",
+        "POST /api/v1/reports — signaler une deforestation (ouvert a tous)",
+        "GET  /api/v1/admin/reports — signalements recus (admin)",
         "POST /api/v1/admin/source/{mode} — bascule demo/reel (admin)",
         "GET  /api/v1/admin/users, /admin/logs — back-office (admin)",
     ])
@@ -217,6 +221,8 @@ def document() -> list[tuple]:
         "Dashboard : KPIs, carte, evolution forestiere, top secteurs touches.",
         "Analyse : classification par annee, comparaison, matrice de confusion du modele.",
         "Predictions : carte de risque, zones critiques.",
+        "Alertes : detection automatique de deforestation par secteur + formulaire "
+        "de signalement citoyen (persiste en base).",
         "Admin : utilisateurs, logs, metriques, modeles (role admin uniquement).",
         "Barre laterale : toggle Source de donnees (demo / reel) a chaud.",
     ])

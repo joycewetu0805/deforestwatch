@@ -11,12 +11,14 @@ from sqlalchemy.orm import Session
 
 from config.settings import ANALYSIS_YEARS, settings
 from src.api import auth
-from src.api.database import User, get_db
+from src.api.database import Report, User, get_db
 from src.api.schemas import (
-    OTPVerify, RegisterResponse, TokenResponse, UserLogin, UserOut, UserRegister,
+    AlertOut, OTPVerify, RegisterResponse, ReportIn, ReportOut, TokenResponse,
+    UserLogin, UserOut, UserRegister,
 )
 from src.utils.helpers import load_json
 from src.data import provider
+from src.analysis import alerts as alerts_engine
 from src.visualization import maps
 
 router = APIRouter(prefix="/api/v1")
@@ -151,6 +153,43 @@ def predictions(year: int):
         "mean_risk": round(float(rmap[rmap > 0].mean()), 1) if (rmap > 0).any() else 0.0,
         "grid_shape": list(rmap.shape),
     }
+
+
+@router.get("/alerts", response_model=list[AlertOut], tags=["alerts"])
+def list_alerts(severity: str | None = None, year: int | None = None,
+                active_only: bool = False, limit: int = 100):
+    """Alertes de déforestation détectées (filtres : sévérité, année, actives)."""
+    items = (alerts_engine.active_alerts() if active_only
+             else alerts_engine.detect_alerts())
+    if severity:
+        items = [a for a in items if a.severity == severity]
+    if year:
+        items = [a for a in items if a.year == year]
+    return [a.to_dict() for a in items[:limit]]
+
+
+@router.get("/alerts/summary", tags=["alerts"])
+def alerts_summary():
+    """Synthèse des alertes : compte par sévérité, surface perdue, année pire."""
+    return alerts_engine.summary()
+
+
+@router.post("/reports", response_model=ReportOut, tags=["alerts"])
+def create_report(payload: ReportIn, db: Session = Depends(get_db)):
+    """Signaler une déforestation suspectée (ouvert à tous)."""
+    report = Report(lat=payload.lat, lon=payload.lon,
+                    description=payload.description, reporter=payload.reporter)
+    db.add(report)
+    db.commit()
+    db.refresh(report)
+    return report
+
+
+@router.get("/admin/reports", response_model=list[ReportOut], tags=["admin"])
+def list_reports(_: User = Depends(auth.require_role("admin")),
+                 db: Session = Depends(get_db)):
+    """Signalements reçus (admin)."""
+    return db.query(Report).order_by(Report.created_at.desc()).limit(200).all()
 
 
 @router.get("/models", tags=["data"])
