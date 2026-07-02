@@ -103,6 +103,8 @@ def build() -> Document:
     doc.add_page_break()
     _chapter4(doc)
     doc.add_page_break()
+    _impact(doc)
+    doc.add_page_break()
     _conclusion(doc)
     doc.add_page_break()
     _bibliography(doc)
@@ -326,6 +328,44 @@ def _chapter4(doc):
     para(doc, "La suite pytest couvre le prétraitement, les modèles, l'API "
               "(authentification, 2FA, routes protégées) et la couche de données. "
               "Le projet est conteneurisé et lançable via `make`.")
+
+
+def _impact(doc):
+    title(doc, "Chapitre 5 — Impact et plus-value dans le contexte congolais")
+    title(doc, "5.1. Un enjeu national et mondial", size=13)
+    para(doc, "La RDC abrite environ 60 % de la forêt du Bassin du Congo, deuxième "
+              "poumon vert de la planète, et la Cuvette centrale y stocke d'immenses "
+              "quantités de carbone. Le pays figure parmi les premiers au monde pour la "
+              "perte de forêt primaire. La déforestation y est surtout diffuse "
+              "(agriculture sur brûlis, charbon de bois, exploitation artisanale), donc "
+              "mal captée par les outils globaux : une approche locale et fine est requise.")
+    title(doc, "5.2. Une province au cœur de la finance climat", size=13)
+    para(doc, "Le Mai-Ndombe est une province pilote REDD+ : réduire et prouver la "
+              "déforestation y a une valeur financière directe (paiements aux résultats). "
+              "Le module d'estimation des émissions de CO₂ relie ainsi les résultats "
+              "techniques au langage des bailleurs (MRV, crédits carbone).")
+    title(doc, "5.3. D'un outil de constat à un outil d'action", size=13)
+    para(doc, "Comparés aux plateformes existantes (Global Forest Watch, RADD), "
+              "DeforestWatch-DRC apporte : une adaptation au contexte local, une "
+              "dimension prédictive (carte de risque), une interface en français, la "
+              "remontée d'information citoyenne (signalement) et la traduction de la "
+              "perte forestière en impact carbone.")
+    title(doc, "5.4. Bénéficiaires concrets", size=13)
+    bullets(doc, [
+        "Ministère de l'Environnement / DIAF : brique d'un système national de "
+        "surveillance (MRV), au service de la souveraineté des données.",
+        "Gardes forestiers / ICCN : alertes géolocalisées pour intervenir vite ; "
+        "radar Sentinel-1 pour surveiller même sous les nuages.",
+        "Gouvernement provincial du Mai-Ndombe : ciblage des secteurs prioritaires.",
+        "Communautés locales : signalement participatif, protection de la ressource.",
+        "ONG et porteurs de projets carbone : quantification pour les crédits.",
+        "Bailleurs (CAFI, Banque mondiale) : transparence conditionnant les paiements.",
+    ])
+    title(doc, "5.5. Limites et positionnement", size=13)
+    para(doc, "Le projet est une preuve de concept : ses résultats doivent être validés "
+              "sur images réelles et données de terrain. Il complète — sans le remplacer "
+              "— un système national, et vaut aussi comme renforcement de capacités : "
+              "démontrer qu'un tel outil peut être conçu et maîtrisé localement.")
 
 
 def _conclusion(doc):

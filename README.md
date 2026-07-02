@@ -8,6 +8,9 @@
 
 > 📘 **Guide complet & mode d'emploi** : [`GUIDE.md`](GUIDE.md) (ou `docs/GUIDE.pdf`) —
 > tout le projet expliqué pas à pas, dont le téléchargement des données depuis Google Earth Engine.
+>
+> 🌍 **Impact & plus-value (contexte congolais)** : [`IMPACT.md`](IMPACT.md) —
+> à quoi sert concrètement la plateforme, et pour qui.
 
 Projet de fin d'études — L3 LMD FASI, Université Protestante au Congo  
 Orientation : Data Science  
