@@ -21,6 +21,38 @@ def _risk():
     return provider.risk_map()
 
 
+@st.cache_data(ttl=600)
+def _series_cached():
+    return provider.landcover_series()
+
+
+def _time_machine(stats):
+    """Time-lapse : la forêt qui recule, avec curseur d'année et comparateur 2015."""
+    st.subheader("🛰️ Machine à remonter le temps — la forêt disparaît sous vos yeux")
+    series = _series_cached()
+    years = sorted(series.keys())
+    by_year = {s["year"]: s for s in stats}
+
+    year = st.select_slider("Glissez les années", options=years, value=years[-1],
+                            key="tm_year")
+    cur = by_year.get(year, stats[-1])
+    first = stats[0]
+    loss_pct = (1 - cur["total_forest_ha"] / first["total_forest_ha"]) * 100
+
+    c1, c2, c3 = st.columns([1, 1, 1])
+    c1.image(maps.classification_to_rgb(series[years[0]]),
+             caption=f"{years[0]} — référence", use_column_width=True)
+    c2.image(maps.classification_to_rgb(series[year]),
+             caption=f"{year} — sélection", use_column_width=True)
+    with c3:
+        ui.kpi(c3, f"Surface forestière — {year}",
+               f"{cur['total_forest_ha']:,.0f} ha",
+               delta=f"▼ {loss_pct:.1f} % perdus depuis {years[0]}", delta_color=ui.ALERT)
+        st.progress(min(loss_pct / 100, 1.0))
+        st.caption(" · ".join(f"{v}" for v in [
+            "🟩 Forêt dense", "🟨 Dégradée", "🟧 Agriculture", "🟦 Eau", "🟥 Bâti"]))
+
+
 def render() -> None:
     ui.header("Surveillance de la forêt équatoriale",
               "Province du Mai-Ndombe (Inongo) · Bassin du Congo · Sentinel-2 2015–2025",
@@ -43,6 +75,11 @@ def render() -> None:
            f"{np.mean([s['deforestation_rate'] for s in stats[1:]]):.2f} %", delta_color=ui.AMBER)
     ui.kpi(c4, "Zones à risque élevé", f"{int(np.sum(risk > 70)) * PIXEL_AREA_HA:,.0f} ha",
            delta="risque > 70/100", delta_color=ui.CYAN)
+
+    st.markdown("---")
+
+    # ── Machine à remonter le temps ──
+    _time_machine(stats)
 
     st.markdown("---")
 

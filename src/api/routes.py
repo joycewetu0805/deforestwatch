@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import io
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import Response
 from sqlalchemy.orm import Session
 
 from config.settings import ANALYSIS_YEARS, settings
@@ -15,8 +17,19 @@ from src.api.schemas import (
 )
 from src.utils.helpers import load_json
 from src.data import provider
+from src.visualization import maps
 
 router = APIRouter(prefix="/api/v1")
+
+
+def _png(rgb, size: int = 512) -> bytes:
+    """Encode un tableau RGB (H,W,3) en PNG agrandi (rendu net, plus proche voisin)."""
+    from PIL import Image
+
+    img = Image.fromarray(rgb).resize((size, size), Image.NEAREST)
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    return buf.getvalue()
 
 
 # ── Authentification ──
@@ -88,6 +101,28 @@ def statistics():
 def data_source():
     """Métadonnées de la source de données active (démo synthétique ou réelle)."""
     return provider.info()
+
+
+@router.get("/maps/landcover/{year}", tags=["maps"],
+            responses={200: {"content": {"image/png": {}}}})
+def map_landcover(year: int):
+    """Carte de couverture du sol (classification) d'une année, en PNG."""
+    series = provider.landcover_series()
+    if year not in series:
+        raise HTTPException(status.HTTP_404_NOT_FOUND,
+                            f"Année {year} indisponible.")
+    rgb = maps.classification_to_rgb(series[year])
+    return Response(_png(rgb), media_type="image/png",
+                    headers={"Cache-Control": "public, max-age=86400"})
+
+
+@router.get("/maps/risk", tags=["maps"],
+            responses={200: {"content": {"image/png": {}}}})
+def map_risk():
+    """Carte de risque de déforestation, en PNG (dégradé vert→rouge)."""
+    rgb = maps.risk_to_rgb(provider.risk_map())
+    return Response(_png(rgb), media_type="image/png",
+                    headers={"Cache-Control": "public, max-age=3600"})
 
 
 @router.post("/admin/source/{mode}", tags=["admin"])

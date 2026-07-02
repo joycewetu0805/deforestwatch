@@ -50,6 +50,22 @@ def test_predictions_year_validation(api_client):
     assert api_client.get("/api/v1/predictions/1990").status_code == 404
 
 
+def test_map_landcover_png(api_client):
+    r = api_client.get("/api/v1/maps/landcover/2025")
+    assert r.status_code == 200
+    assert r.headers["content-type"] == "image/png"
+    assert r.content[:8] == b"\x89PNG\r\n\x1a\n"
+    # années différentes => images différentes
+    assert api_client.get("/api/v1/maps/landcover/2015").content != r.content
+    assert api_client.get("/api/v1/maps/landcover/1999").status_code == 404
+
+
+def test_map_risk_png(api_client):
+    r = api_client.get("/api/v1/maps/risk")
+    assert r.status_code == 200
+    assert r.headers["content-type"] == "image/png"
+
+
 def test_admin_requires_auth(api_client):
     assert api_client.get("/api/v1/admin/users").status_code == 401
 

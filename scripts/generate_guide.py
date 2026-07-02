@@ -206,6 +206,8 @@ def document() -> list[tuple]:
         "GET  /api/v1/predictions/{year} — synthese des zones a risque",
         "GET  /api/v1/models — performances des modeles",
         "GET  /api/v1/source — source de donnees active (demo/reel)",
+        "GET  /api/v1/maps/landcover/{year} — carte de couverture (PNG) d'une annee",
+        "GET  /api/v1/maps/risk — carte de risque (PNG)",
         "POST /api/v1/admin/source/{mode} — bascule demo/reel (admin)",
         "GET  /api/v1/admin/users, /admin/logs — back-office (admin)",
     ])
@@ -221,6 +223,8 @@ def document() -> list[tuple]:
     h3("Frontend React (port 5173)")
     ul([
         "Landing page 'CongoForest Watch' : hero anime, KPIs, fonctionnalites, stack.",
+        "Machine a remonter le temps : time-lapse animee de la deforestation 2015-2025 "
+        "avec lecture automatique et comparateur avant/apres (glissiere 2015 vs annee).",
         "Dashboard de monitoring : KPIs, courbes, carte de risque (fetch /api/v1/statistics).",
         "Lancement : cd frontend && npm install && npm run dev",
     ])

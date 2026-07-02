@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import {
   ArrowLeft, Layers, TriangleAlert, TreePine, Activity, RefreshCw,
 } from 'lucide-react'
+import TimeMachine from './TimeMachine.jsx'
 
 // Données de repli si l'API FastAPI n'est pas joignable (mode statique)
 const FALLBACK_STATS = Array.from({ length: 11 }, (_, i) => {
@@ -153,10 +154,16 @@ export default function Dashboard({ onBack }) {
 
   const load = () => {
     setLoading(true)
+    // 1) API live -> 2) assets de démo statiques -> 3) données embarquées
     fetch('/api/v1/statistics')
       .then((r) => r.ok ? r.json() : Promise.reject())
       .then((d) => { if (d.statistics?.length) { setStats(d.statistics); setLive(true) } })
-      .catch(() => setLive(false))
+      .catch(() =>
+        fetch('/demo/stats.json')
+          .then((r) => r.ok ? r.json() : Promise.reject())
+          .then((s) => { if (s?.length) { setStats(s); setLive(false) } })
+          .catch(() => setLive(false)),
+      )
       .finally(() => setLoading(false))
   }
   useEffect(load, [])
@@ -192,6 +199,8 @@ export default function Dashboard({ onBack }) {
           <StatCard icon={TriangleAlert} label="Alertes actives" accent="text-amber-400" value="12" sub="cette semaine" />
           <StatCard icon={Layers} label="Période suivie" accent="text-satellite" value={`${first.year}–${last.year}`} sub="composites annuels" />
         </div>
+
+        <TimeMachine stats={stats} />
 
         <div className="grid gap-6 lg:grid-cols-2">
           <Panel title="Évolution de la couverture forestière"><LineChart data={stats} /></Panel>

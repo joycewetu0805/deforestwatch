@@ -1,0 +1,26 @@
+# Blueprint Render — API FastAPI DeforestWatch-DRC
+# Déploiement : sur https://dashboard.render.com → New → Blueprint → ce dépôt.
+services:
+  - type: web
+    name: deforestwatch-api
+    runtime: python
+    plan: free
+    region: frankfurt
+    branch: main
+    buildCommand: pip install -r requirements-api.txt
+    startCommand: uvicorn src.api.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.9"
+      - key: DEMO_MODE
+        value: "true"
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      # Optionnel : base PostgreSQL/Supabase (sinon repli SQLite)
+      # - key: DATABASE_URL
+      #   sync: false
