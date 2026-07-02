@@ -55,8 +55,17 @@ def main() -> None:
     (OUT / "alerts_summary.json").write_text(
         json.dumps(alerts_engine.summary(), ensure_ascii=False), encoding="utf-8")
 
-    log.info(f"Assets démo exportés dans {OUT} : "
-             f"{len(series)} cartes + stats.json + risk.png + {len(active)} alertes")
+    # Impact : carbone + atout radar (pour le panneau du frontend en mode statique)
+    from src.analysis import carbon as carbon_engine
+    from src.data.radar import cloud_penetration_demo
+    from config.settings import ANALYSIS_YEARS
+
+    impact = {"carbon": carbon_engine.summary(),
+              "radar": cloud_penetration_demo(ANALYSIS_YEARS[-1])}
+    (OUT / "impact.json").write_text(json.dumps(impact, ensure_ascii=False), encoding="utf-8")
+
+    log.info(f"Assets démo exportés dans {OUT} : {len(series)} cartes + stats.json "
+             f"+ risk.png + {len(active)} alertes + impact.json")
 
 
 if __name__ == "__main__":

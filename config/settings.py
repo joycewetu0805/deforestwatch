@@ -49,6 +49,15 @@ class Settings(BaseSettings):
     study_area_lon: float = 18.27
     study_area_buffer_km: int = 25      # Rayon 25km → zone ~50km x 50km
 
+    # ── Notifications e-mail (SMTP) des alertes ──
+    alert_email_enabled: bool = False   # sécurité : désactivé par défaut
+    smtp_host: Optional[str] = None
+    smtp_port: int = 587
+    smtp_user: Optional[str] = None
+    smtp_password: Optional[str] = None
+    alert_email_from: Optional[str] = None
+    alert_email_to: Optional[str] = None  # destinataires séparés par des virgules
+
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"
@@ -67,6 +76,22 @@ SENTINEL2_BANDS = {
     "B12": "SWIR2 (2190nm)",
 }
 BAND_ORDER = ["B2", "B3", "B4", "B8", "B11", "B12"]
+
+# Bandes radar Sentinel-1 (rétrodiffusion, dB) — pénètrent les nuages
+SENTINEL1_BANDS = {
+    "VV": "Rétrodiffusion co-polarisée (dB)",
+    "VH": "Rétrodiffusion cross-polarisée (dB)",
+}
+RADAR_BAND_ORDER = ["VV", "VH"]
+
+# ── Estimation du carbone ──
+# Biomasse aérienne moyenne d'une forêt tropicale humide dense du Bassin du Congo.
+# Valeur médiane de la littérature (~310 t/ha de biomasse sèche).
+AGB_TONNES_PER_HA = 310.0            # biomasse aérienne (t/ha)
+CARBON_FRACTION = 0.47              # fraction de carbone dans la biomasse (IPCC)
+CO2_PER_CARBON = 44.0 / 12.0        # conversion C -> CO2 (~3.67)
+# Facteur direct : tonnes de CO2 émises par hectare de forêt détruite
+CO2_TONNES_PER_HA = AGB_TONNES_PER_HA * CARBON_FRACTION * CO2_PER_CARBON
 
 # Indices spectraux
 SPECTRAL_INDICES = {

@@ -1,0 +1,1 @@
+{"carbon": {"total_co2_t": 95577281.6, "total_co2_mt": 95.577, "assumptions": {"agb_t_per_ha": 310.0, "carbon_fraction": 0.47, "co2_per_carbon": 3.667, "co2_t_per_ha": 534.2}, "equivalents": {"cars_year": 20777670, "trees_year": 4551299124}, "worst_year": 2021}, "radar": {"year": 2025, "optical_usable_pct": 49.9, "radar_usable_pct": 100.0, "gain_pct": 50.1}}

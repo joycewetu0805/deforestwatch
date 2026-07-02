@@ -212,6 +212,9 @@ def document() -> list[tuple]:
         "GET  /api/v1/alerts/summary — synthese des alertes",
         "POST /api/v1/reports — signaler une deforestation (ouvert a tous)",
         "GET  /api/v1/admin/reports — signalements recus (admin)",
+        "GET  /api/v1/carbon — emissions de CO2 liees a la deforestation + equivalences",
+        "GET  /api/v1/radar/coverage/{year} — atout radar Sentinel-1 (nuages)",
+        "POST /api/v1/admin/notify — digest e-mail des alertes (admin)",
         "POST /api/v1/admin/source/{mode} — bascule demo/reel (admin)",
         "GET  /api/v1/admin/users, /admin/logs — back-office (admin)",
     ])

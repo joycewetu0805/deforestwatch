@@ -21,8 +21,8 @@ def render() -> None:
               "Utilisateurs · journaux d'API · métriques d'usage · modèles déployés",
               logo="⚙️")
 
-    tab1, tab2, tab3, tab4 = st.tabs(
-        ["👥 Utilisateurs", "📜 Logs", "📈 Métriques d'usage", "🤖 Modèles"]
+    tab1, tab2, tab3, tab4, tab5 = st.tabs(
+        ["👥 Utilisateurs", "📜 Logs", "📈 Métriques d'usage", "🤖 Modèles", "📧 Notifications"]
     )
 
     # ── Utilisateurs ──
@@ -82,3 +82,27 @@ def render() -> None:
             st.info("Aucun modèle entraîné. Lancez `make train`.")
         st.download_button("📄 Générer un rapport (PDF)", data=b"Rapport DeforestWatch-DRC",
                            file_name="rapport_deforestation.txt")
+
+    # ── Notifications e-mail ──
+    with tab5:
+        st.subheader("Notifier les alertes par e-mail")
+        from src.analysis import notify
+        from config.settings import settings as cfg
+
+        sev = st.selectbox("Sévérité minimale", ["critique", "élevée", "modérée"], index=1)
+        digest = notify.build_digest(sev)
+        st.metric("Alertes à notifier", digest["count"])
+        st.metric("CO₂ associé", f"{digest['co2_t']:,.0f} t")
+        with st.expander("Aperçu de l'e-mail"):
+            st.text(digest["text"])
+        if cfg.alert_email_enabled:
+            st.success("Envoi SMTP activé.")
+        else:
+            st.warning("Envoi désactivé (ALERT_EMAIL_ENABLED=false). Configurez le SMTP "
+                       "dans `.env` pour envoyer réellement.")
+        if st.button("📧 Envoyer le digest maintenant", type="primary"):
+            res = notify.notify_critical(sev)
+            if res.get("sent"):
+                st.success(f"✅ Envoyé à {res['recipients']} ({res['count']} alertes).")
+            else:
+                st.info(f"Non envoyé : {res.get('reason')} (aperçu généré ci-dessus).")
