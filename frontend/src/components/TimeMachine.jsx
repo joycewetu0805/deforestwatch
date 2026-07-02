@@ -9,7 +9,17 @@ const CLASSES = [
   { name: 'Urbain / Bâti', color: '#C0392B' },
 ]
 
-const img = (year) => `/api/v1/maps/landcover/${year}`
+// L'API sert les cartes en direct ; à défaut (hébergement statique), on bascule
+// sur les images de démo embarquées dans public/demo/.
+const apiImg = (year) => `/api/v1/maps/landcover/${year}`
+const demoImg = (year) => `/demo/landcover/${year}.png`
+const onImgError = (e) => {
+  if (!e.target.dataset.fb) {
+    e.target.dataset.fb = '1'
+    const y = e.target.dataset.year
+    e.target.src = demoImg(y)
+  }
+}
 
 // Compteur anime (hectares)
 function useTween(value, ms = 700) {
@@ -36,16 +46,19 @@ export default function TimeMachine({ stats }) {
   const [idx, setIdx] = useState(years.length - 1)
   const [playing, setPlaying] = useState(false)
   const [swipe, setSwipe] = useState(55)
-  const [ok, setOk] = useState(true)
 
   const year = years[idx]
   const forest = useTween(stats[idx]?.total_forest_ha ?? 0)
   const first = stats[0]
   const lossPct = first ? (1 - (stats[idx]?.total_forest_ha ?? 0) / first.total_forest_ha) * 100 : 0
 
-  // Precharge des images
+  // Precharge des images (API, sinon démo statique)
   useEffect(() => {
-    years.forEach((y) => { const im = new Image(); im.src = img(y) })
+    years.forEach((y) => {
+      const im = new Image()
+      im.onerror = () => { im.src = demoImg(y) }
+      im.src = apiImg(y)
+    })
   }, [years])
 
   // Lecture automatique
@@ -77,41 +90,32 @@ export default function TimeMachine({ stats }) {
       <div className="grid gap-5 lg:grid-cols-[1.4fr_1fr]">
         {/* Moniteur satellite avec comparateur avant/apres */}
         <div className="relative aspect-square overflow-hidden rounded-xl border border-white/10 bg-black">
-          {ok ? (
-            <>
-              {/* image annee courante (dessous) */}
-              <img src={img(year)} alt={`Couverture ${year}`} onError={() => setOk(false)}
-                className="absolute inset-0 h-full w-full object-cover" draggable={false} />
-              {/* image de reference 2015 (dessus), revelee par le curseur */}
-              <img src={img(years[0])} alt={`Couverture ${years[0]}`}
-                className="absolute inset-0 h-full w-full object-cover"
-                style={{ clipPath: `inset(0 ${100 - swipe}% 0 0)` }} draggable={false} />
-              {/* ligne de glissiere */}
-              <div className="absolute inset-y-0 w-0.5 bg-emerald-glow shadow-[0_0_12px_#10B981]"
-                style={{ left: `${swipe}%` }} />
-              <div className="pointer-events-none absolute left-3 top-3 rounded bg-black/60 px-2 py-1 text-xs text-emerald-glow">
-                {years[0]} (référence)
-              </div>
-              <div className="pointer-events-none absolute right-3 top-3 rounded bg-black/60 px-2 py-1 text-xs text-amber-300">
-                {year}
-              </div>
-              {/* balayage satellite */}
-              <div className="pointer-events-none absolute inset-0 animate-pulse"
-                style={{ background: 'linear-gradient(180deg, transparent 60%, rgba(6,182,212,.08))' }} />
-              {/* annee geante */}
-              <div className="pointer-events-none absolute bottom-3 left-1/2 -translate-x-1/2 text-5xl font-extrabold tracking-tight text-white/90 drop-shadow-[0_2px_8px_rgba(0,0,0,.8)]">
-                {year}
-              </div>
-              <input type="range" min="0" max="100" value={swipe}
-                onChange={(e) => setSwipe(+e.target.value)}
-                className="absolute inset-x-0 bottom-0 w-full cursor-ew-resize opacity-0" />
-            </>
-          ) : (
-            <div className="flex h-full items-center justify-center p-6 text-center text-sm text-slate-400">
-              Cartes servies par l'API (GET /api/v1/maps/landcover/&#123;year&#125;).<br />
-              Lancez le backend (make api) pour l'animation.
-            </div>
-          )}
+          {/* image annee courante (dessous) */}
+          <img src={apiImg(year)} data-year={year} onError={onImgError} alt={`Couverture ${year}`}
+            className="absolute inset-0 h-full w-full object-cover" draggable={false} />
+          {/* image de reference 2015 (dessus), revelee par le curseur */}
+          <img src={apiImg(years[0])} data-year={years[0]} onError={onImgError} alt={`Couverture ${years[0]}`}
+            className="absolute inset-0 h-full w-full object-cover"
+            style={{ clipPath: `inset(0 ${100 - swipe}% 0 0)` }} draggable={false} />
+          {/* ligne de glissiere */}
+          <div className="absolute inset-y-0 w-0.5 bg-emerald-glow shadow-[0_0_12px_#10B981]"
+            style={{ left: `${swipe}%` }} />
+          <div className="pointer-events-none absolute left-3 top-3 rounded bg-black/60 px-2 py-1 text-xs text-emerald-glow">
+            {years[0]} (référence)
+          </div>
+          <div className="pointer-events-none absolute right-3 top-3 rounded bg-black/60 px-2 py-1 text-xs text-amber-300">
+            {year}
+          </div>
+          {/* balayage satellite */}
+          <div className="pointer-events-none absolute inset-0 animate-pulse"
+            style={{ background: 'linear-gradient(180deg, transparent 60%, rgba(6,182,212,.08))' }} />
+          {/* annee geante */}
+          <div className="pointer-events-none absolute bottom-3 left-1/2 -translate-x-1/2 text-5xl font-extrabold tracking-tight text-white/90 drop-shadow-[0_2px_8px_rgba(0,0,0,.8)]">
+            {year}
+          </div>
+          <input type="range" min="0" max="100" value={swipe}
+            onChange={(e) => setSwipe(+e.target.value)}
+            className="absolute inset-x-0 bottom-0 w-full cursor-ew-resize opacity-0" />
         </div>
 
         {/* Controles + stats */}

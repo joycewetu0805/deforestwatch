@@ -154,10 +154,16 @@ export default function Dashboard({ onBack }) {
 
   const load = () => {
     setLoading(true)
+    // 1) API live -> 2) assets de démo statiques -> 3) données embarquées
     fetch('/api/v1/statistics')
       .then((r) => r.ok ? r.json() : Promise.reject())
       .then((d) => { if (d.statistics?.length) { setStats(d.statistics); setLive(true) } })
-      .catch(() => setLive(false))
+      .catch(() =>
+        fetch('/demo/stats.json')
+          .then((r) => r.ok ? r.json() : Promise.reject())
+          .then((s) => { if (s?.length) { setStats(s); setLive(false) } })
+          .catch(() => setLive(false)),
+      )
       .finally(() => setLoading(false))
   }
   useEffect(load, [])
