@@ -8,14 +8,24 @@ const DEMO = {
 }
 const DEMO_OTP = '123456'
 
-async function apiLogin(email, password) {
+async function apiLogin(email, password, otp) {
   const r = await fetch('/api/v1/auth/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify({ email, password, otp_code: otp }),
   })
   if (!r.ok) throw new Error('api')
   return r.json() // { access_token, ... }
+}
+
+// Rôle réel porté par le JWT (payload.role), au lieu d'un rôle codé en dur.
+function roleFromToken(token) {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]))
+    return payload.role || 'user'
+  } catch {
+    return 'user'
+  }
 }
 
 export default function Login({ onSuccess, onBack }) {
@@ -38,9 +48,9 @@ export default function Login({ onSuccess, onBack }) {
       let token = null
       let user = { email, role: 'user', name: email.split('@')[0] }
       try {
-        const data = await apiLogin(email, password)
+        const data = await apiLogin(email, password, otp)
         token = data.access_token
-        user.role = 'user'
+        user.role = roleFromToken(token)
       } catch {
         // 2) repli démo (build statique sans backend)
         const u = DEMO[email]

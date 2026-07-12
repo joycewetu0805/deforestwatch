@@ -3,7 +3,7 @@ DeforestWatch-DRC — Configuration centralisée
 Toutes les variables d'environnement et constantes du projet.
 """
 
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import Optional
 from pathlib import Path
 
@@ -14,9 +14,17 @@ RAW_DIR = DATA_DIR / "raw"
 PROCESSED_DIR = DATA_DIR / "processed"
 MODELS_DIR = DATA_DIR / "models"
 
+# Valeur par défaut du secret JWT — volontairement reconnaissable pour que la
+# validation de production puisse détecter qu'elle n'a pas été surchargée.
+DEFAULT_JWT_SECRET = "change-this-in-production-with-a-long-random-secret-key"
+
 
 class Settings(BaseSettings):
     """Configuration chargée depuis .env"""
+
+    model_config = SettingsConfigDict(
+        env_file=".env", env_file_encoding="utf-8", extra="ignore"
+    )
 
     # ── Google Earth Engine ──
     gee_service_account: Optional[str] = None
@@ -31,9 +39,20 @@ class Settings(BaseSettings):
     openweather_api_key: Optional[str] = None
 
     # ── Authentication ──
-    jwt_secret_key: str = "change-this-in-production-with-a-long-random-secret-key"
+    jwt_secret_key: str = DEFAULT_JWT_SECRET
     jwt_algorithm: str = "HS256"
     jwt_expiration_minutes: int = 60
+
+    # ── 2FA (imposée côté serveur) ──
+    require_2fa: bool = True             # exiger le code OTP à la connexion
+    demo_otp_code: str = "123456"        # code statique accepté en mode démo
+
+    # ── Bootstrap admin en production (optionnel, via variables d'env) ──
+    admin_email: Optional[str] = None
+    admin_password: Optional[str] = None
+
+    # ── CORS ── liste d'origines séparées par des virgules ; "*" = tout (dev)
+    cors_origins: str = "*"
 
     # ── App ──
     app_env: str = "development"
@@ -58,10 +77,33 @@ class Settings(BaseSettings):
     alert_email_from: Optional[str] = None
     alert_email_to: Optional[str] = None  # destinataires séparés par des virgules
 
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
-        extra = "ignore"
+    # ── Helpers ──
+    @property
+    def is_production(self) -> bool:
+        return self.app_env.lower() in ("production", "prod")
+
+    def cors_origins_list(self) -> list[str]:
+        return [o.strip() for o in self.cors_origins.split(",") if o.strip()]
+
+
+def production_config_problems(s: "Settings") -> list[str]:
+    """Retourne la liste des réglages dangereux si l'on tourne en production.
+
+    Sert au « fail-fast » : une instance de production ne doit pas démarrer avec
+    le secret JWT par défaut, le debug actif ou un CORS grand ouvert.
+    """
+    if not s.is_production:
+        return []
+    problems: list[str] = []
+    if s.jwt_secret_key == DEFAULT_JWT_SECRET:
+        problems.append("JWT_SECRET_KEY est resté à sa valeur par défaut")
+    if s.app_debug:
+        problems.append("APP_DEBUG=true en production")
+    if "*" in s.cors_origins_list():
+        problems.append("CORS_ORIGINS ouvert à toutes les origines (*)")
+    if s.demo_mode:
+        problems.append("DEMO_MODE=true en production (compte admin de démo créé)")
+    return problems
 
 
 # ── Constantes du projet ──

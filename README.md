@@ -120,11 +120,11 @@ deforest-watch/
 │   └── utils/
 │       ├── logger.py            # Logging centralisé
 │       └── helpers.py           # Fonctions utilitaires
-├── notebooks/
-│   ├── 01_exploration.ipynb     # EDA initiale
-│   ├── 02_preprocessing.ipynb   # Pipeline de prétraitement
-│   ├── 03_modeling.ipynb        # Entraînement et comparaison
-│   └── 04_results.ipynb         # Résultats et visualisations
+├── notebooks/                   # Notebooks au format script (.py, jupytext)
+│   ├── 01_exploration.py        # EDA initiale
+│   ├── 02_preprocessing.py      # Pipeline de prétraitement
+│   ├── 03_modeling.py           # Entraînement et comparaison
+│   └── 04_results.py            # Résultats et visualisations
 ├── streamlit_app/
 │   ├── app.py                   # Dashboard principal (login 2FA + navigation)
 │   ├── views/                   # Pages (dossier nommé "views" pour ne pas
@@ -150,8 +150,10 @@ deforest-watch/
 │   ├── raw/                     # Données brutes (non versionné)
 │   ├── processed/               # Données traitées
 │   └── models/                  # Modèles sauvegardés
-└── docs/
-    └── cahier_des_charges.docx
+└── docs/                        # Livrables générés
+    ├── memoire_deforestwatch.docx
+    ├── soutenance_deforestwatch.pptx
+    └── GUIDE.pdf
 ```
 
 ## Installation et lancement
@@ -166,8 +168,8 @@ deforest-watch/
 
 ```bash
 # Cloner le dépôt
-git clone https://github.com/alviii/deforest-watch-drc.git
-cd deforest-watch-drc
+git clone https://github.com/joycewetu0805/deforestwatch.git
+cd deforestwatch
 
 # Environnement virtuel
 python -m venv venv
@@ -223,6 +225,20 @@ pytest tests/ -v --cov=src
 > (GEE, Supabase, OpenWeather, JWT) et mettez `DEMO_MODE=false`. Les modules de
 > collecte basculent automatiquement sur les vraies sources (Sentinel-2, Hansen,
 > SRTM, OpenWeatherMap) et la base sur PostgreSQL/Supabase.
+
+### Sécurité
+
+- **2FA imposée côté serveur** : `/api/v1/auth/login` n'émet **aucun** token sans
+  code OTP valide. En mode démo, le code statique `123456` est accepté ; en
+  production, c'est un vrai code TOTP (Google Authenticator). Réglable via
+  `REQUIRE_2FA`.
+- **Fail-fast production** : avec `APP_ENV=production`, l'API **refuse de démarrer**
+  si le secret JWT est resté par défaut, si `APP_DEBUG=true`, si le CORS est ouvert
+  à `*` ou si `DEMO_MODE=true`.
+- **CORS** : origines autorisées via `CORS_ORIGINS` (liste séparée par des virgules).
+- **Compte admin** : en démo, `admin@deforestwatch.cd` / `admin123` est créé
+  automatiquement. En production, aucun compte par défaut : renseignez
+  `ADMIN_EMAIL` / `ADMIN_PASSWORD` pour bootstrapper un admin.
 
 ### Brancher de vraies images satellites
 
@@ -312,4 +328,4 @@ Ce projet est réalisé dans un cadre académique. Les données satellites utili
 
 ## Contact
 
-Alviii — Université Protestante au Congo, FASI L3 LMD
+Joyce A. WETUNGANI — Université Protestante au Congo, FASI L3 LMD

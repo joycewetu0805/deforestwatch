@@ -7,6 +7,15 @@ config/gee-key.json
 files/deforestwatch-*.json
 .streamlit/secrets.toml
 
+# ── Fichiers de travail / doublons (gardés en local, hors dépôt) ──
+files/files.zip
+files/PROMPTS_BUILD.md
+files/prompts_frontend.md
+files/settings.py
+files/docker-compose.yml
+files/Dockerfile
+files/requirements.txt
+
 # ── Python ──
 __pycache__/
 *.py[cod]

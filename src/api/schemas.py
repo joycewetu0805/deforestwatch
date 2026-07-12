@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
 class UserRegister(BaseModel):
@@ -16,6 +16,7 @@ class UserRegister(BaseModel):
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
+    otp_code: Optional[str] = Field(default=None, min_length=6, max_length=6)
 
 
 class OTPVerify(BaseModel):
@@ -62,8 +63,7 @@ class UserOut(BaseModel):
     is_active: bool
     created_at: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class LogOut(BaseModel):
@@ -72,8 +72,7 @@ class LogOut(BaseModel):
     status_code: int
     timestamp: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class AlertOut(BaseModel):
@@ -105,5 +104,4 @@ class ReportOut(BaseModel):
     status: str
     created_at: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

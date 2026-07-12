@@ -5,7 +5,7 @@ dépendances FastAPI de protection des routes et contrôle de rôle.
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 import bcrypt
@@ -45,13 +45,32 @@ def otp_provisioning_uri(secret: str, email: str) -> str:
 
 
 def verify_otp(secret: str, code: str) -> bool:
+    if not secret or not code:
+        return False
     return pyotp.TOTP(secret).verify(code, valid_window=1)
+
+
+def check_login_otp(user: "User", code: Optional[str]) -> bool:
+    """2FA imposée à la connexion.
+
+    - Si `require_2fa` est désactivé (déploiement sans 2FA), on laisse passer.
+    - En mode démo, le code statique documenté (`demo_otp_code`) est accepté,
+      ce qui garde la démo « clé en main » sans compte Google Authenticator.
+    - Sinon, on vérifie le vrai code TOTP du secret de l'utilisateur.
+    """
+    if not settings.require_2fa:
+        return True
+    if not code:
+        return False
+    if settings.demo_mode and code == settings.demo_otp_code:
+        return True
+    return verify_otp(user.otp_secret, code)
 
 
 # ── JWT ──
 def _create_token(data: dict, expires: timedelta) -> str:
     payload = data.copy()
-    payload["exp"] = datetime.utcnow() + expires
+    payload["exp"] = datetime.now(timezone.utc) + expires
     return jwt.encode(payload, settings.jwt_secret_key, algorithm=settings.jwt_algorithm)
 
 

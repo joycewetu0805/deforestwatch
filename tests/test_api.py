@@ -18,15 +18,30 @@ def test_register_and_login_flow(api_client):
     assert api_client.post("/api/v1/auth/register",
                            json={"email": email, "password": "secret1"}).status_code == 400
 
-    r = api_client.post("/api/v1/auth/login", json={"email": email, "password": "secret1"})
+    # 2FA imposée : la connexion exige le code OTP (statique en mode démo).
+    r = api_client.post("/api/v1/auth/login",
+                        json={"email": email, "password": "secret1", "otp_code": "123456"})
     assert r.status_code == 200
     assert "access_token" in r.json()
 
 
 def test_login_wrong_password(api_client):
     api_client.post("/api/v1/auth/register", json={"email": "x@y.cd", "password": "rightpw"})
-    r = api_client.post("/api/v1/auth/login", json={"email": "x@y.cd", "password": "wrongpw"})
+    r = api_client.post("/api/v1/auth/login",
+                        json={"email": "x@y.cd", "password": "wrongpw", "otp_code": "123456"})
     assert r.status_code == 401
+
+
+def test_login_requires_otp(api_client):
+    """Sans code 2FA valide, aucun token n'est émis même avec le bon mot de passe."""
+    api_client.post("/api/v1/auth/register", json={"email": "no2fa@y.cd", "password": "secret1"})
+    # mot de passe correct mais OTP absent → refus
+    assert api_client.post("/api/v1/auth/login",
+                           json={"email": "no2fa@y.cd", "password": "secret1"}).status_code == 401
+    # OTP erroné → refus
+    assert api_client.post("/api/v1/auth/login",
+                           json={"email": "no2fa@y.cd", "password": "secret1",
+                                 "otp_code": "000000"}).status_code == 401
 
 
 def test_otp_verification(api_client):
@@ -72,7 +87,8 @@ def test_admin_requires_auth(api_client):
 
 def test_admin_access_with_admin_token(api_client):
     r = api_client.post("/api/v1/auth/login",
-                        json={"email": "admin@deforestwatch.cd", "password": "admin123"})
+                        json={"email": "admin@deforestwatch.cd", "password": "admin123",
+                              "otp_code": "123456"})
     token = r.json()["access_token"]
     r = api_client.get("/api/v1/admin/users", headers={"Authorization": f"Bearer {token}"})
     assert r.status_code == 200
@@ -82,6 +98,7 @@ def test_admin_access_with_admin_token(api_client):
 def test_admin_forbidden_for_regular_user(api_client):
     api_client.post("/api/v1/auth/register", json={"email": "reg@user.cd", "password": "secret1"})
     token = api_client.post("/api/v1/auth/login",
-                            json={"email": "reg@user.cd", "password": "secret1"}).json()["access_token"]
+                            json={"email": "reg@user.cd", "password": "secret1",
+                                  "otp_code": "123456"}).json()["access_token"]
     r = api_client.get("/api/v1/admin/users", headers={"Authorization": f"Bearer {token}"})
     assert r.status_code == 403

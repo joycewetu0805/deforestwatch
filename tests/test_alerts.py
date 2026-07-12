@@ -52,6 +52,7 @@ def test_report_submission_flow(api_client):
 def test_admin_reports_protected(api_client):
     assert api_client.get("/api/v1/admin/reports").status_code == 401
     tok = api_client.post("/api/v1/auth/login", json={
-        "email": "admin@deforestwatch.cd", "password": "admin123"}).json()["access_token"]
+        "email": "admin@deforestwatch.cd", "password": "admin123",
+        "otp_code": "123456"}).json()["access_token"]
     r = api_client.get("/api/v1/admin/reports", headers={"Authorization": f"Bearer {tok}"})
     assert r.status_code == 200

@@ -1,1 +1,3 @@
-from config.settings import settings  # noqa: F401
+from config.settings import settings
+
+__all__ = ["settings"]
