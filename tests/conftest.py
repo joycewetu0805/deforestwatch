@@ -1,12 +1,31 @@
 """Fixtures partagées pour la suite de tests."""
 
+import os
 import sys
+import tempfile
 from pathlib import Path
 
 import numpy as np
 import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+# Base de test isolée (fichier temporaire) : évite de polluer data/ et garantit
+# des tests déterministes, indépendants de l'état laissé par une exécution
+# précédente. Doit être défini AVANT tout import de config/settings ou src.
+os.environ.setdefault(
+    "DATABASE_URL", f"sqlite:///{Path(tempfile.gettempdir()) / 'dfw_test.db'}"
+)
+
+
+@pytest.fixture(autouse=True)
+def _isolate_db():
+    """Repart d'un schéma vierge à chaque test (isolation déterministe)."""
+    from src.api.database import Base, engine
+
+    Base.metadata.drop_all(bind=engine)
+    Base.metadata.create_all(bind=engine)
+    yield
 
 
 @pytest.fixture(scope="session")

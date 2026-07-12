@@ -76,6 +76,7 @@ def test_radar_coverage_endpoint(api_client):
 def test_notify_endpoint_admin_only(api_client):
     assert api_client.post("/api/v1/admin/notify").status_code == 401
     tok = api_client.post("/api/v1/auth/login", json={
-        "email": "admin@deforestwatch.cd", "password": "admin123"}).json()["access_token"]
+        "email": "admin@deforestwatch.cd", "password": "admin123",
+        "otp_code": "123456"}).json()["access_token"]
     r = api_client.post("/api/v1/admin/notify", headers={"Authorization": f"Bearer {tok}"})
     assert r.status_code == 200

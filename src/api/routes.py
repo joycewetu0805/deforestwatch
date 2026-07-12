@@ -62,6 +62,10 @@ def login(payload: UserLogin, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == payload.email).first()
     if not user or not auth.verify_password(payload.password, user.password_hash):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Identifiants invalides")
+    # 2FA imposée : aucun token n'est émis sans code OTP valide.
+    if not auth.check_login_otp(user, payload.otp_code):
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED,
+                            "Code 2FA requis ou invalide")
     return TokenResponse(
         access_token=auth.create_access_token(user.email, user.role),
         refresh_token=auth.create_refresh_token(user.email),

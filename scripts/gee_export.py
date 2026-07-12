@@ -19,7 +19,6 @@ Après un export, lancez `make check-data` puis mettez DEMO_MODE=false.
 from __future__ import annotations
 
 import argparse
-from pathlib import Path
 
 import numpy as np
 
