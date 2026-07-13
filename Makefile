@@ -55,6 +55,9 @@ memoir:
 monograph:
 	python -m scripts.generate_monograph
 
+monograph-pdf:
+	python -m scripts.generate_monograph_pdf
+
 slides:
 	python -m scripts.generate_slides
 
