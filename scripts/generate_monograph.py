@@ -235,7 +235,7 @@ def _cover(doc):
 
     p = doc.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    _run(p, f"Présentée par : ", size=12)
+    _run(p, "Présentée par : ", size=12)
     _run(p, AUTHOR, size=12, bold=True)
     center(doc, "Directeur de mémoire : ……………………………………………", size=11)
     center(doc, "Co-directeur / Encadrant : ……………………………………", size=11)
