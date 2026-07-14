@@ -1,4 +1,4 @@
-.PHONY: help install collect train test api dashboard frontend seed report memoir check-data docker clean
+.PHONY: help install collect train test api dashboard frontend seed report memoir monograph check-data docker clean
 
 help:
 	@echo "DeforestWatch-DRC — commandes disponibles :"
@@ -12,6 +12,7 @@ help:
 	@echo "  make frontend   Démarre le frontend React (port 5173)"
 	@echo "  make report     Génère le rapport de synthèse"
 	@echo "  make memoir     Génère le mémoire académique (.docx)"
+	@echo "  make monograph  Génère la monographie L3 conforme au guide UPC (.docx)"
 	@echo "  make slides     Génère la présentation de soutenance (.pptx)"
 	@echo "  make guide      Génère le guide complet (GUIDE.md + docs/GUIDE.pdf)"
 	@echo "  make export-demo Écrit des GeoTIFF de test dans data/raw/"
@@ -50,6 +51,12 @@ report:
 
 memoir:
 	python -m scripts.generate_memoir
+
+monograph:
+	python -m scripts.generate_monograph
+
+monograph-pdf:
+	python -m scripts.generate_monograph_pdf
 
 slides:
 	python -m scripts.generate_slides
