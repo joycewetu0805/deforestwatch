@@ -108,6 +108,7 @@ class RasterSource(DataSource):
         self.composites_dir = self.root / "composites"
         self.landcover_dir = self.root / "landcover"
         self.topography_path = self.root / "topography.tif"
+        self._ref_shape: tuple[int, int] | None = None  # grille commune (H, W)
 
     # ── Détection ──
     @classmethod
@@ -139,6 +140,43 @@ class RasterSource(DataSource):
             arr = ds.read().astype(np.float32)  # (bandes, H, W)
         return np.transpose(arr, (1, 2, 0))      # (H, W, bandes)
 
+    def reference_shape(self) -> tuple[int, int] | None:
+        """Grille carrée commune (H, W) à toutes les couches.
+
+        GEE peut renvoyer des tailles différant de ±1 pixel selon la source
+        (Sentinel-2, Dynamic World, SRTM). On recadre donc chaque couche sur le
+        plus petit côté commun pour garantir des dimensions alignées.
+        """
+        if self._ref_shape is not None:
+            return self._ref_shape
+        try:
+            import rasterio
+        except ImportError:  # pragma: no cover
+            return None
+        dims = []
+        tifs = list(self.composites_dir.glob("*.tif")) if self.composites_dir.is_dir() else []
+        if self.landcover_dir.is_dir():
+            tifs += list(self.landcover_dir.glob("*.tif"))
+        if self.topography_path.exists():
+            tifs.append(self.topography_path)
+        for f in tifs:
+            with rasterio.open(f) as ds:
+                dims.append(ds.height)
+                dims.append(ds.width)
+        if not dims:
+            return None
+        side = min(dims)
+        self._ref_shape = (side, side)
+        return self._ref_shape
+
+    def _align(self, arr: np.ndarray) -> np.ndarray:
+        """Recadre le coin supérieur-gauche sur la grille commune."""
+        ref = self.reference_shape()
+        if ref is None:
+            return arr
+        h, w = ref
+        return arr[:h, :w]
+
     def composite(self, year: int) -> np.ndarray:
         path = self.composites_dir / f"{year}.tif"
         if not path.exists():
@@ -146,22 +184,22 @@ class RasterSource(DataSource):
         arr = self._read(path)
         if arr.shape[-1] < 6:
             raise ValueError(f"{path} : 6 bandes attendues, {arr.shape[-1]} trouvées.")
-        return arr[..., :6]
+        return self._align(arr[..., :6])
 
     def landcover(self, year: int) -> np.ndarray | None:
         path = self.landcover_dir / f"{year}.tif"
         if not path.exists():
             return None
-        return self._read(path)[..., 0].astype(np.int16)
+        return self._align(self._read(path)[..., 0]).astype(np.int16)
 
     def topography(self) -> np.ndarray:
         if not self.topography_path.exists():
-            # Repli : topographie synthétique à la taille du premier composite
+            # Repli : topographie synthétique à la taille de la grille commune
             log.warning("topography.tif absent → topographie synthétique.")
-            yrs = self.years()
-            grid = self.composite(yrs[0]).shape[0] if yrs else 256
+            ref = self.reference_shape()
+            grid = ref[0] if ref else 256
             return synthetic.generate_topography(grid=grid)
-        return self._read(self.topography_path)[..., :3]
+        return self._align(self._read(self.topography_path)[..., :3])
 
 
 # ──────────────────────────────────────────────────────────────────────────
