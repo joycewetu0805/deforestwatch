@@ -83,21 +83,38 @@ def download_direct(years, scale=100):
     import ee
     import requests
 
-    ee.Initialize()
+    ee.Initialize()  # le projet vient de `earthengine set_project <id>`
     out = ensure_dir(RAW_DIR / "composites")
     b = _aoi_bbox()
     aoi = ee.Geometry.Rectangle([b["min_lon"], b["min_lat"], b["max_lon"], b["max_lat"]])
     for year in years:
         img = _annual_collection(ee, aoi, year)
-        url = img.getDownloadURL({"region": aoi, "scale": scale, "format": "GEO_TIFF"})
+        # Sentinel-2 SR n'existe pas avant ~2017 → collection vide, aucune bande.
+        if img.bandNames().size().getInfo() == 0:
+            log.warning(f"{year} : aucune image Sentinel-2 SR disponible "
+                        "(couverture à partir de ~2017). Année ignorée.")
+            continue
+        # filePerBand=False => un seul GeoTIFF multibande (et non un zip d'une
+        # bande par fichier, cause des composites illisibles).
+        url = img.getDownloadURL({
+            "region": aoi, "scale": scale,
+            "format": "GEO_TIFF", "filePerBand": False,
+        })
         log.info(f"Téléchargement {year} (scale={scale} m)…")
-        data = requests.get(url, timeout=300).content
-        try:  # GEE renvoie parfois un zip
+        data = requests.get(url, timeout=600).content
+        if data[:2] == b"PK":  # archive zip → on extrait l'unique GeoTIFF
             with zipfile.ZipFile(io.BytesIO(data)) as zf:
-                tif = [n for n in zf.namelist() if n.endswith(".tif")][0]
-                (out / f"{year}.tif").write_bytes(zf.read(tif))
-        except zipfile.BadZipFile:
-            (out / f"{year}.tif").write_bytes(data)
+                names = [n for n in zf.namelist() if n.endswith(".tif")]
+                if not names:
+                    raise RuntimeError(f"{year} : aucun GeoTIFF dans l'archive GEE.")
+                data = zf.read(names[0])
+        # Un vrai GeoTIFF commence par 'II*\\x00' (little-endian) ou 'MM\\x00*'.
+        if data[:4] not in (b"II*\x00", b"MM\x00*"):
+            raise RuntimeError(
+                f"{year} : réponse GEE invalide (souvent un dépassement de taille "
+                "de téléchargement direct). Augmentez --scale ou réduisez la zone, "
+                f"ou utilisez l'export Drive. Détail : {data[:300]!r}")
+        (out / f"{year}.tif").write_bytes(data)
         log.info(f"  → {out / f'{year}.tif'}")
 
 
