@@ -84,10 +84,11 @@ def _clean(ax, grid_axis: str | None = "y") -> None:
 
 
 def _no_axes(ax) -> None:
+    """Retire graduations et cadre : pour les cartes et les schémas."""
     ax.set_xticks([])
     ax.set_yticks([])
-    for s in ax.spines.values():
-        ax.spines[s.spine_type].set_visible(False) if False else s.set_visible(False)
+    for spine in ax.spines.values():
+        spine.set_visible(False)
 
 
 def _save(fig, name: str) -> Path:
@@ -151,8 +152,7 @@ def fig_signatures() -> None:
 # ──────────────────────────────────────────────────────────────────────────
 def fig_composite() -> None:
     """Trois scènes nuageuses et la médiane qui les nettoie."""
-    from src.preprocessing.cloud_masking import cloud_mask_from_scl, synthetic_scl
-
+    from src.preprocessing.cloud_masking import cloud_mask_from_scl
     from src.visualization.maps import classification_to_rgb
 
     series = synthetic.generate_landcover_series()
