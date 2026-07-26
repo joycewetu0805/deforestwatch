@@ -41,3 +41,4 @@ spark-warehouse/
 
 # Base SQLite générée en mode démo
 data/*.db
+docs/synthese_technique.html
