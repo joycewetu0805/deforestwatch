@@ -1,4 +1,4 @@
-.PHONY: help install collect train test api dashboard frontend seed report memoir check-data docker clean
+.PHONY: help install collect train test api dashboard frontend seed report memoir guide synthese figures check-data docker clean
 
 help:
 	@echo "DeforestWatch-DRC — commandes disponibles :"
@@ -14,6 +14,7 @@ help:
 	@echo "  make memoir     Génère le mémoire académique (.docx)"
 	@echo "  make slides     Génère la présentation de soutenance (.pptx)"
 	@echo "  make guide      Génère le guide complet (GUIDE.md + docs/GUIDE.pdf)"
+	@echo "  make synthese   Génère la synthèse technique illustrée (docs/SYNTHESE_TECHNIQUE.pdf)"
 	@echo "  make export-demo Écrit des GeoTIFF de test dans data/raw/"
 	@echo "  make check-data Vérifie les vraies données dans data/raw/"
 	@echo "  make demo       Bascule .env en mode démo (synthétique)"
@@ -56,6 +57,12 @@ slides:
 
 guide:
 	python -m scripts.generate_guide
+
+synthese:
+	python -m scripts.generate_synthese_technique
+
+figures:
+	python -m scripts.figures_synthese
 
 export-demo:
 	python -m scripts.gee_export --demo-geotiff
