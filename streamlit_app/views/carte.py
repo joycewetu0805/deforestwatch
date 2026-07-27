@@ -147,6 +147,8 @@ def render() -> None:
     st.caption("Molette pour zoomer, clic-glissé pour déplacer, "
                "Ctrl + clic-glissé pour pivoter et incliner. "
                "Survolez une cellule pour lire sa valeur.")
+    if layer == "risk":
+        st.caption(f"Source du risque : {provider.risk_source_label()}.")
 
     _legend(layer)
     _indicators(series, years, year)

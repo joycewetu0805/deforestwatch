@@ -89,8 +89,17 @@ class ModelRegistry(Base):
     deployed_at = Column(DateTime, default=datetime.utcnow)
 
 
+def _sqlite_engine(url: str):
+    """SQLite partagé entre threads : l'API sert les requêtes hors du thread
+    où le moteur a été créé, ce que le pilote refuse par défaut."""
+    return create_engine(url, connect_args={"check_same_thread": False})
+
+
 def _make_engine():
     url = settings.database_url
+    if url.startswith("sqlite"):
+        log.info("Base SQLite configurée explicitement.")
+        return _sqlite_engine(url)
     try:
         engine = create_engine(url, pool_pre_ping=True)
         engine.connect().close()
@@ -100,8 +109,7 @@ def _make_engine():
         log.warning(f"PostgreSQL indisponible ({exc}). Repli SQLite local.")
         from config.settings import DATA_DIR
 
-        return create_engine(f"sqlite:///{DATA_DIR / 'deforestwatch.db'}",
-                             connect_args={"check_same_thread": False})
+        return _sqlite_engine(f"sqlite:///{DATA_DIR / 'deforestwatch.db'}")
 
 
 engine = _make_engine()

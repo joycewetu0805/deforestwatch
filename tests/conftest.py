@@ -1,12 +1,26 @@
 """Fixtures partagées pour la suite de tests."""
 
+import os
 import sys
 from pathlib import Path
 
-import numpy as np
 import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+# Base de test isolée, définie avant tout import de config.settings.
+# Sans cela, les tests d'authentification écrivent dans la base de démonstration
+# et échouent au deuxième lancement, l'utilisateur de test existant déjà.
+_TEST_DB = Path(__file__).resolve().parent / ".pytest_deforestwatch.db"
+os.environ.setdefault("DATABASE_URL", f"sqlite:///{_TEST_DB}")
+
+
+@pytest.fixture(scope="session", autouse=True)
+def _base_de_test_vierge():
+    """Repart d'une base vide à chaque session, et ne laisse rien derrière."""
+    _TEST_DB.unlink(missing_ok=True)
+    yield
+    _TEST_DB.unlink(missing_ok=True)
 
 
 @pytest.fixture(scope="session")

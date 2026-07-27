@@ -42,3 +42,6 @@ spark-warehouse/
 # Base SQLite générée en mode démo
 data/*.db
 docs/synthese_technique.html
+
+# Base SQLite isolée de la suite de tests
+tests/.pytest_*.db

@@ -19,6 +19,9 @@ from src.data.sources import (
     set_mode,
 )
 from src.utils import synthetic
+from src.utils.logger import get_logger
+
+log = get_logger("provider")
 
 
 def source():
@@ -73,9 +76,71 @@ def yearly_statistics() -> list[dict]:
     return synthetic.yearly_statistics(series=landcover_series())
 
 
+# Modèle de risque chargé une seule fois, puis réutilisé.
+_risk_model = None
+_risk_model_loaded = False
+
+
+def _load_risk_model():
+    """Charge le prédicteur entraîné, ou None s'il n'a pas encore été entraîné."""
+    global _risk_model, _risk_model_loaded
+    if _risk_model_loaded:
+        return _risk_model
+    _risk_model_loaded = True
+    try:
+        from src.models import risk_predictor
+
+        if risk_predictor.is_trained():
+            _risk_model = risk_predictor.RiskPredictor.load()
+            log.info("Carte de risque : modèle entraîné chargé.")
+        else:
+            log.warning(
+                "Aucun modèle de risque entraîné dans data/models/ : repli sur "
+                "la référence géométrique. Lancez `make train` pour utiliser le "
+                "modèle appris."
+            )
+    except Exception as exc:  # pragma: no cover - dépend de l'install ML
+        log.warning(f"Modèle de risque illisible ({exc}) : repli géométrique.")
+        _risk_model = None
+    return _risk_model
+
+
+def risk_source() -> str:
+    """Origine de la carte de risque : 'model' (appris) ou 'baseline' (géométrique)."""
+    return "model" if _load_risk_model() is not None else "baseline"
+
+
+def risk_source_label() -> str:
+    """Libellé affichable de l'origine de la carte de risque."""
+    return ("Prédicteur entraîné (XGBoost, 6 variables d'accessibilité)"
+            if risk_source() == "model"
+            else "Référence géométrique (décroissance avec la distance au front)")
+
+
 def risk_map() -> np.ndarray:
-    """Carte de risque calculée sur la source active."""
-    return synthetic.risk_map(series=landcover_series())
+    """
+    Carte de risque calculée sur la source active.
+
+    Utilise le modèle entraîné s'il est disponible sur le disque. Sinon, replie
+    sur la référence géométrique, qui ne demande aucun entraînement. Les deux
+    renvoient une grille 0..100 de même forme, donc l'appelant n'a rien à
+    changer ; `risk_source()` indique laquelle est active.
+    """
+    model = _load_risk_model()
+    series = landcover_series()
+    if model is None:
+        return synthetic.risk_map(series=series)
+    try:
+        return model.risk_map(series=series)
+    except Exception as exc:  # pragma: no cover - robustesse à la démo
+        log.warning(f"Prédiction du modèle en échec ({exc}) : repli géométrique.")
+        return synthetic.risk_map(series=series)
+
+
+def reset_risk_model() -> None:
+    """Force le rechargement du modèle au prochain appel (après un entraînement)."""
+    global _risk_model, _risk_model_loaded
+    _risk_model, _risk_model_loaded = None, False
 
 
 def info() -> dict:

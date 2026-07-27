@@ -24,12 +24,18 @@ log = get_logger("risk_predictor")
 RISK_FEATURES = ["dist_road", "dist_village", "dist_deforested", "slope", "altitude", "neighbor_rate"]
 
 
-def _risk_features(year_idx: int = -2, seed: int = 42):
-    """Construit les features de risque + label (déforesté à l'année suivante)."""
-    from config.settings import ANALYSIS_YEARS
+def _risk_features(year_idx: int = -2, seed: int = 42, series: dict | None = None):
+    """
+    Construit les features de risque + label (déforesté à l'année suivante).
 
-    series = synthetic.generate_landcover_series(seed=seed)
-    years = ANALYSIS_YEARS
+    `series` : série {année: carte de classes} à analyser. Si None, la série
+    synthétique est utilisée. Permet d'appliquer le modèle aux vraies données
+    sans que ce module ait à connaître la couche `provider`, ce qui éviterait
+    un import circulaire.
+    """
+    if series is None:
+        series = synthetic.generate_landcover_series(seed=seed)
+    years = sorted(series)
     lc_now = series[years[year_idx]]
     lc_next = series[years[year_idx + 1]] if year_idx + 1 < len(years) else series[years[-1]]
     grid = lc_now.shape[0]
@@ -99,8 +105,8 @@ class RiskPredictor:
 
             return GradientBoostingClassifier(random_state=42)
 
-    def train(self, seed: int = 42) -> dict:
-        X, y, _, _ = _risk_features(seed=seed)
+    def train(self, seed: int = 42, series: dict | None = None) -> dict:
+        X, y, _, _ = _risk_features(seed=seed, series=series)
         if y.sum() == 0:  # garantit au moins deux classes
             y[: max(1, len(y) // 50)] = 1
         self.model.fit(X, y)
@@ -108,9 +114,9 @@ class RiskPredictor:
         log.info(f"RiskPredictor entraîné — accuracy train={score:.3f}, positifs={int(y.sum())}")
         return {"train_accuracy": round(score, 4), "n_positive": int(y.sum())}
 
-    def risk_map(self, seed: int = 42) -> np.ndarray:
-        """Carte de risque 0–100 sur la zone d'étude."""
-        _, _, feats, forest = _risk_features(year_idx=-1, seed=seed)
+    def risk_map(self, seed: int = 42, series: dict | None = None) -> np.ndarray:
+        """Carte de risque 0–100 sur la zone d'étude, prédite par le modèle."""
+        _, _, feats, forest = _risk_features(year_idx=-1, seed=seed, series=series)
         flat = feats.reshape(-1, feats.shape[-1])
         try:
             proba = self.model.predict_proba(flat)[:, 1]
@@ -125,6 +131,24 @@ class RiskPredictor:
         ensure_dir(path.parent)
         joblib.dump(self.model, path)
         return path
+
+    @classmethod
+    def load(cls, path: Path | None = None) -> "RiskPredictor":
+        """Recharge un modèle entraîné depuis le disque."""
+        path = Path(path or default_model_path())
+        obj = cls.__new__(cls)          # évite de reconstruire un modèle vierge
+        obj.model = joblib.load(path)
+        return obj
+
+
+def default_model_path() -> Path:
+    """Emplacement du modèle de risque écrit par `make train`."""
+    return MODELS_DIR / "risk_predictor.joblib"
+
+
+def is_trained() -> bool:
+    """Vrai si un modèle entraîné est disponible sur le disque."""
+    return default_model_path().exists()
 
 
 def main() -> None:
