@@ -25,6 +25,10 @@ log = get_logger("export_frontend_demo")
 
 OUT = PROJECT_ROOT / "frontend" / "public" / "demo"
 
+# Finesse des cellules 3D exportées vers le frontend. Compromis entre précision
+# et poids du fichier : le site est statique, tout est téléchargé d'un coup.
+MAP_STEP = 4
+
 
 def _png(rgb, size: int = 512) -> bytes:
     from PIL import Image
@@ -64,8 +68,30 @@ def main() -> None:
               "radar": cloud_penetration_demo(ANALYSIS_YEARS[-1])}
     (OUT / "impact.json").write_text(json.dumps(impact, ensure_ascii=False), encoding="utf-8")
 
+    # Carte interactive : emprise géographique, cellules 3D de risque, légendes.
+    # Les couches 2D réutilisent les PNG déjà exportés ci-dessus, posés sur le
+    # fond de carte par leur emprise.
+    from src.visualization import geo
+
+    risk = provider.risk_map()
+    years = sorted(series)
+    map_payload = {
+        "bounds": geo.bounds(),
+        "center": {"lat": geo.center()[0], "lon": geo.center()[1]},
+        "years": years,
+        "legend": geo.legend(),
+        "cell": {"step": MAP_STEP,
+                 "radius_m": round(geo.cell_radius_m(risk.shape, MAP_STEP), 1),
+                 "surface_ha": round(geo.cell_area_ha(MAP_STEP), 1)},
+        "risk_cells": geo.risk_cells(risk, step=MAP_STEP),
+        "loss_cells": geo.loss_cells(series[years[0]], series[years[-1]], step=MAP_STEP),
+    }
+    (OUT / "map.json").write_text(json.dumps(map_payload, ensure_ascii=False),
+                                  encoding="utf-8")
+
     log.info(f"Assets démo exportés dans {OUT} : {len(series)} cartes + stats.json "
-             f"+ risk.png + {len(active)} alertes + impact.json")
+             f"+ risk.png + {len(active)} alertes + impact.json + map.json "
+             f"({len(map_payload['risk_cells'])} cellules de risque)")
 
 
 if __name__ == "__main__":
