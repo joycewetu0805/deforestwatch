@@ -16,7 +16,7 @@ from dataclasses import dataclass, asdict
 
 import numpy as np
 
-from config.settings import PIXEL_AREA_HA, settings
+from config.settings import settings
 from src.data import provider
 
 # Seuil de perte (hectares) par secteur et par an au-delà duquel on alerte
@@ -76,8 +76,14 @@ def detect_alerts(threshold_ha: float = DEFAULT_THRESHOLD_HA,
     block = max(grid // n_blocks, 1)
     alerts: list[Alert] = []
 
+    # Surface d'un pixel de la grille complète, pas du bloc : la résolution est
+    # celle de l'image lue, qui varie avec la source de données.
+    from config.settings import pixel_area_ha
+
+    aire_pixel = pixel_area_ha(series[years[0]].shape)
+
     def forest_ha(sub: np.ndarray) -> float:
-        return float(np.sum((sub == 0) | (sub == 1))) * PIXEL_AREA_HA
+        return float(np.sum((sub == 0) | (sub == 1))) * aire_pixel
 
     for k in range(1, len(years)):
         y_prev, y_cur = years[k - 1], years[k]

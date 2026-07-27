@@ -59,9 +59,18 @@ class Settings(BaseSettings):
     alert_email_to: Optional[str] = None  # destinataires séparés par des virgules
 
     class Config:
-        env_file = ".env"
+        # Chemin absolu, et non ".env" relatif : sinon le fichier n'est trouvé
+        # que si le processus est lancé depuis la racine du projet. Un dashboard
+        # démarré depuis un autre répertoire retomberait silencieusement en mode
+        # démonstration, alors que DEMO_MODE=false est bien renseigné.
+        env_file = str(PROJECT_ROOT / ".env")
         env_file_encoding = "utf-8"
         extra = "ignore"
+
+
+# Instance globale. Définie avant les constantes, dont certaines en dépendent
+# (l'étendue de la zone d'étude est calculée à partir du rayon configuré).
+settings = Settings()
 
 
 # ── Constantes du projet ──
@@ -135,7 +144,27 @@ ANALYSIS_YEARS = list(range(ANALYSIS_START_YEAR, ANALYSIS_END_YEAR + 1))
 
 # Résolution de la grille synthétique de la zone d'étude (pixels)
 GRID_SIZE = 256          # 256x256 pixels pour la zone ~50km
-PIXEL_AREA_HA = (50_000 / GRID_SIZE) ** 2 / 10_000  # surface d'un pixel en hectares
+
+# Côté de la zone d'étude en mètres, dérivé du rayon configuré.
+STUDY_AREA_SIDE_M = settings.study_area_buffer_km * 2 * 1000
+
+
+def pixel_area_ha(shape) -> float:
+    """
+    Surface au sol d'un pixel, en hectares, pour une grille donnée.
+
+    À utiliser systématiquement plutôt que la constante PIXEL_AREA_HA : une
+    image réelle exportée depuis Google Earth Engine n'a aucune raison de faire
+    256x256, et toute surface calculée avec la mauvaise résolution est fausse
+    dans le rapport du carré des dimensions.
+    """
+    rows, cols = shape[0], shape[1]
+    return (STUDY_AREA_SIDE_M / cols) * (STUDY_AREA_SIDE_M / rows) / 10_000
+
+
+# Surface d'un pixel pour la grille par défaut. Ne reste correcte que pour une
+# grille GRID_SIZE x GRID_SIZE : préférez pixel_area_ha(tableau.shape).
+PIXEL_AREA_HA = pixel_area_ha((GRID_SIZE, GRID_SIZE))
 
 # Paramètres des modèles ML (defaults)
 RF_PARAMS = {
@@ -164,7 +193,3 @@ UNET_PARAMS = {
     "epochs": 50,
     "learning_rate": 1e-4,
 }
-
-
-# Instance globale
-settings = Settings()

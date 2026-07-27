@@ -1,18 +1,37 @@
 """Tests de la couche source de données (synthétique + chemin données réelles)."""
 
 import numpy as np
+import pytest
 
 from src.data import provider
 from src.data.sources import DataSource, RasterSource, SyntheticSource, resolve_source
 
 
-def test_demo_mode_uses_synthetic():
+@pytest.fixture
+def sans_donnees_reelles(monkeypatch, tmp_path):
+    """
+    Isole le test de l'état local du poste.
+
+    Ces tests décrivent le comportement quand data/raw/ est vide. Sans cette
+    isolation, ils échouent dès qu'un développeur a basculé en mode réel, ce
+    qui est justement le cas d'usage normal du projet.
+    """
+    monkeypatch.setattr(RasterSource, "has_data", classmethod(lambda cls, root=None: False))
+    from src.data import sources
+
+    sources.reset_cache()
+    yield
+    sources.set_mode("auto")
+    sources.reset_cache()
+
+
+def test_demo_mode_uses_synthetic(sans_donnees_reelles):
     src = resolve_source(force=None, use_cache=False)
     assert src.name == "synthetic"
     assert not src.is_real
 
 
-def test_set_mode_switches_and_falls_back():
+def test_set_mode_switches_and_falls_back(sans_donnees_reelles):
     from src.data.sources import set_mode
 
     try:

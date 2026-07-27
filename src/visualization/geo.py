@@ -28,7 +28,9 @@ import math
 
 import numpy as np
 
-from config.settings import CLASS_COLORS, LAND_COVER_CLASSES, PIXEL_AREA_HA, settings
+from config.settings import (
+    CLASS_COLORS, LAND_COVER_CLASSES, PIXEL_AREA_HA, pixel_area_ha, settings,
+)
 from src.utils.helpers import bbox_from_center
 
 # Rampe de risque : sable, ocre, rouge sombre (mêmes teintes que les figures du PDF)
@@ -89,9 +91,14 @@ def cell_radius_m(shape: tuple[int, int], step: int) -> float:
     return side_m / 2 * math.sqrt(2)
 
 
-def cell_area_ha(step: int) -> float:
-    """Surface au sol d'une cellule agrégée, en hectares."""
-    return PIXEL_AREA_HA * step * step
+def cell_area_ha(step: int, shape: tuple[int, int] | None = None) -> float:
+    """Surface au sol d'une cellule agrégée, en hectares.
+
+    `shape` : dimensions de la grille source. Sans elle, la résolution par
+    défaut est supposée, ce qui n'est juste que pour une grille GRID_SIZE.
+    """
+    unit = pixel_area_ha(shape) if shape is not None else PIXEL_AREA_HA
+    return unit * step * step
 
 
 # ──────────────────────────────────────────────────────────────────────────
@@ -212,7 +219,7 @@ def loss_cells(lc_start: np.ndarray, lc_end: np.ndarray, step: int = 3,
     lost_ratio = _blocks((forest_start & ~forest_end).astype(np.float32), step).mean(axis=(1, 3))
     kept_ratio = _blocks((forest_start & forest_end).astype(np.float32), step).mean(axis=(1, 3))
     lons, lats = _grid_positions(lost_ratio.shape)
-    cell_ha = cell_area_ha(step)
+    cell_ha = cell_area_ha(step, lc_start.shape)
 
     cells: list[dict] = []
     for r in range(lost_ratio.shape[0]):
@@ -242,7 +249,7 @@ def hotspots(risk: np.ndarray, threshold: float = 80.0, limit: int = 12,
     """Les cellules les plus à risque, géolocalisées, pour un tableau ou des marqueurs."""
     cells = risk_cells(risk, step=step, min_risk=threshold)
     cells.sort(key=lambda c: c["value"], reverse=True)
-    area = cell_area_ha(step)
+    area = cell_area_ha(step, risk.shape)
     for cell in cells[:limit]:
         cell["surface_ha"] = round(area, 1)
     return cells[:limit]
