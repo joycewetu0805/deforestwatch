@@ -14,7 +14,6 @@ import numpy as np
 from config.settings import (
     ANALYSIS_YEARS,
     GRID_SIZE,
-    PIXEL_AREA_HA,
 )
 
 
@@ -173,12 +172,16 @@ def yearly_statistics(series: dict | None = None, seed: int = 42) -> list[dict]:
     """
     if series is None:
         series = generate_landcover_series(seed=seed)
+    from config.settings import pixel_area_ha
+
     stats = []
     prev_forest = None
     for year in sorted(series.keys()):
         lc = series[year]
+        # surface déduite de la grille effectivement lue, et non de GRID_SIZE :
+        # une image réelle n'a aucune raison de faire 256x256.
         forest_px = int(np.sum((lc == 0) | (lc == 1)))
-        forest_ha = round(forest_px * PIXEL_AREA_HA, 1)
+        forest_ha = round(forest_px * pixel_area_ha(lc.shape), 1)
         loss_ha = round((prev_forest - forest_ha), 1) if prev_forest is not None else 0.0
         rate = round(100 * loss_ha / prev_forest, 2) if prev_forest else 0.0
         stats.append({

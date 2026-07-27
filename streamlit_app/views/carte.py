@@ -16,7 +16,7 @@ import pandas as pd
 import pydeck as pdk
 import streamlit as st
 
-from config.settings import PIXEL_AREA_HA
+from config.settings import pixel_area_ha
 from src.data import provider
 from src.visualization import geo
 from streamlit_app.components import ui
@@ -61,7 +61,7 @@ def _cells(layer: str, year: int, step: int, min_risk: float) -> list[dict]:
 
 
 def _tooltip(layer: str, step: int) -> dict:
-    surface = f"{geo.cell_area_ha(step):,.0f} ha".replace(",", " ")
+    surface = f"{geo.cell_area_ha(step, _risk().shape):,.0f} ha".replace(",", " ")
     if layer == "risk":
         html = (f"<b>Risque {{value}}/100</b><br/>Cellule de {surface}"
                 "<br/><span style='color:#94a3b8'>{lat}, {lon}</span>")
@@ -174,9 +174,10 @@ def _indicators(series: dict, years: list[int], year: int) -> None:
     forest_start = (series[years[0]] == 0) | (series[years[0]] == 1)
     forest_now = (lc == 0) | (lc == 1)
 
-    forest_ha = float(np.sum(forest_now)) * PIXEL_AREA_HA
-    lost_ha = float(np.sum(forest_start & ~forest_now)) * PIXEL_AREA_HA
-    high_ha = float(np.sum(risk > 70)) * PIXEL_AREA_HA
+    aire = pixel_area_ha(lc.shape)
+    forest_ha = float(np.sum(forest_now)) * aire
+    lost_ha = float(np.sum(forest_start & ~forest_now)) * aire
+    high_ha = float(np.sum(risk > 70)) * pixel_area_ha(risk.shape)
 
     c1, c2, c3 = st.columns(3)
     c1.metric(f"Forêt en {year}", f"{forest_ha:,.0f} ha".replace(",", " "))

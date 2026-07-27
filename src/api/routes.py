@@ -147,17 +147,17 @@ def predictions(year: int):
         raise HTTPException(status.HTTP_404_NOT_FOUND, f"Année hors période {ANALYSIS_YEARS[0]}–{ANALYSIS_YEARS[-1]}")
     import numpy as np
 
-    from config.settings import PIXEL_AREA_HA
+    from config.settings import pixel_area_ha
 
     rmap = provider.risk_map()
     high = int(np.sum(rmap > 70))
     return {
         "year": year,
         "high_risk_pixels": high,
-        # PIXEL_AREA_HA, dérivé de GRID_SIZE, et non une constante en dur :
-        # la valeur 0.038 utilisée jusqu'ici sous-évaluait la surface d'un
-        # facteur 100 et contredisait le chiffre affiché par le dashboard.
-        "high_risk_ha": round(high * PIXEL_AREA_HA, 1),
+        # Surface déduite de la grille réellement lue. La valeur 0.038 en dur
+        # utilisée auparavant sous-évaluait la surface d'un facteur 100 et
+        # contredisait le chiffre affiché par le dashboard.
+        "high_risk_ha": round(high * pixel_area_ha(rmap.shape), 1),
         "mean_risk": round(float(rmap[rmap > 0].mean()), 1) if (rmap > 0).any() else 0.0,
         "grid_shape": list(rmap.shape),
         "risk_source": provider.risk_source(),

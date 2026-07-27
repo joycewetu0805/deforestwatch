@@ -5,7 +5,7 @@ from __future__ import annotations
 import numpy as np
 import streamlit as st
 
-from config.settings import PIXEL_AREA_HA, settings
+from config.settings import pixel_area_ha, settings
 from src.data import provider
 from src.visualization import maps
 from streamlit_app.components import ui
@@ -35,7 +35,7 @@ def render() -> None:
     total_forest_px = int(np.sum(risk > 0))
 
     c1, c2, c3 = st.columns(3)
-    c1.metric("Surface à risque", f"{at_risk_px * PIXEL_AREA_HA:,.0f} ha")
+    c1.metric("Surface à risque", f"{at_risk_px * pixel_area_ha(risk.shape):,.0f} ha")
     c2.metric("% de la forêt concernée",
               f"{100 * at_risk_px / max(total_forest_px, 1):.1f} %")
     c3.metric("Risque moyen (forêt)",

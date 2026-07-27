@@ -5,7 +5,7 @@ from __future__ import annotations
 import numpy as np
 import streamlit as st
 
-from config.settings import PIXEL_AREA_HA
+from config.settings import pixel_area_ha
 from src.data import provider
 from src.visualization import charts, maps, timeline
 from streamlit_app.components import ui
@@ -105,7 +105,7 @@ def render() -> None:
            delta_color=ui.ALERT)
     ui.kpi(c3, "Taux annuel moyen",
            f"{np.mean([s['deforestation_rate'] for s in stats[1:]]):.2f} %", delta_color=ui.AMBER)
-    ui.kpi(c4, "Zones à risque élevé", f"{int(np.sum(risk > 70)) * PIXEL_AREA_HA:,.0f} ha",
+    ui.kpi(c4, "Zones à risque élevé", f"{int(np.sum(risk > 70)) * pixel_area_ha(risk.shape):,.0f} ha",
            delta="risque > 70/100", delta_color=ui.CYAN)
 
     st.markdown("---")
@@ -147,11 +147,13 @@ def render() -> None:
     lc = series[max(series)]
     grid = lc.shape[0]
     block = grid // 5
+    aire = pixel_area_ha(lc.shape)   # résolution de la grille lue, pas du bloc
     rows = []
     for bi in range(5):
         for bj in range(5):
             sub = lc[bi * block:(bi + 1) * block, bj * block:(bj + 1) * block]
             loss_px = int(np.sum(sub >= 2))
-            rows.append({"Secteur": f"R{bi}C{bj}", "Déforesté (ha)": round(loss_px * PIXEL_AREA_HA, 1)})
+            rows.append({"Secteur": f"R{bi}C{bj}",
+                         "Déforesté (ha)": round(loss_px * aire, 1)})
     rows = sorted(rows, key=lambda r: r["Déforesté (ha)"], reverse=True)[:5]
     st.dataframe(rows, use_container_width=True, hide_index=True)
