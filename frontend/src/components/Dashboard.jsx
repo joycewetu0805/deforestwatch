@@ -6,6 +6,7 @@ import {
 import TimeMachine from './TimeMachine.jsx'
 import AlertsPanel from './AlertsPanel.jsx'
 import ImpactPanel from './ImpactPanel.jsx'
+import MapView from './MapView.jsx'
 
 // Données de repli si l'API FastAPI n'est pas joignable (mode statique)
 const FALLBACK_STATS = Array.from({ length: 11 }, (_, i) => {
@@ -216,6 +217,10 @@ export default function Dashboard({ onBack, user, onLogout }) {
         </div>
 
         <TimeMachine stats={stats} />
+
+        <Panel title="Carte interactive 2D/3D">
+          <MapView />
+        </Panel>
 
         <ImpactPanel />
 

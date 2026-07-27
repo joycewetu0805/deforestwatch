@@ -615,6 +615,22 @@ def document() -> list[tuple]:
       "intacts reste à faible risque. C'est ce que l'on attend d'un modèle de "
       "front, et c'est un bon test de crédibilité.")
 
+    h3("Ce que l'application sert réellement")
+    p("La carte de risque affichée par l'API, le dashboard et le frontend passe "
+      "par src/data/provider.py, qui applique une règle explicite : si un modèle "
+      "entraîné est présent dans data/models/, c'est lui qui prédit ; sinon, le "
+      "système replie sur une référence géométrique où le risque décroît "
+      "exponentiellement avec la distance au front de déforestation.")
+    p("Les deux renvoient une grille 0 à 100 de même forme, donc l'appelant n'a "
+      "rien à changer. La fonction risk_source() indique laquelle est active, et "
+      "les interfaces affichent ce libellé sous la carte. Un jury qui demande "
+      "d'où vient la carte obtient donc la réponse à l'écran, sans avoir à "
+      "ouvrir le code.")
+    p("La référence géométrique n'est pas un pis-aller : elle sert de point de "
+      "comparaison. Un modèle appris qui ne ferait pas mieux qu'une simple "
+      "décroissance avec la distance n'apporterait rien, et c'est exactement le "
+      "genre de vérification qu'un travail sérieux doit exposer.")
+
     page()
 
     h2("5.7 Le découpage entraînement / test, point méthodologique central")
@@ -901,11 +917,10 @@ def document() -> list[tuple]:
          "données réelles, sans modifier une seule ligne de code. Datasets, "
          "statistiques, cartes, API et dashboard suivent automatiquement.")
 
-    p("Deux exceptions à connaître, par honnêteté : le prédicteur de risque et le "
-      "pipeline Spark appellent encore directement le générateur synthétique. Ces "
-      "deux modules resteront donc en mode démonstration même avec de vraies "
-      "images en place. C'est le prochain point à corriger pour que la bascule "
-      "soit complète.")
+    p("Une exception subsiste, à connaître par honnêteté : le pipeline Spark "
+      "appelle encore directement le générateur synthétique et restera donc en "
+      "mode démonstration même avec de vraies images en place. C'est le prochain "
+      "point à corriger pour que la bascule soit complète.")
 
     page()
 

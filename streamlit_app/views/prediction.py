@@ -18,8 +18,14 @@ def _risk():
 
 def render() -> None:
     ui.header("Prédiction des zones à risque",
-              "Probabilité de déforestation future par pixel (modèle de risque XGBoost)",
+              f"Probabilité de déforestation future par pixel · {provider.risk_source_label()}",
               logo="🔮")
+
+    if provider.risk_source() == "baseline":
+        st.info("Aucun modèle entraîné n'a été trouvé dans data/models/. La carte "
+                "affichée est la référence géométrique : le risque décroît avec la "
+                "distance au front de déforestation. Lancez `make train` pour "
+                "basculer sur le prédicteur appris.")
 
     risk = _risk()
     threshold = st.slider("Seuil de risque minimal affiché", 0, 100, 50)
